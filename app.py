@@ -53,16 +53,35 @@ def index():
                 
                 # Format ticket data for display
                 for ticket in recent_tickets:
-                    # Format the created date
-                    from datetime import datetime
+                    # Format the created date to New York time (UTC-4)
+                    from datetime import datetime, timezone, timedelta
                     created_at = datetime.fromisoformat(ticket['created_at'].replace('Z', '+00:00'))
-                    ticket['created_at_formatted'] = created_at.strftime('%Y-%m-%d %H:%M:%S UTC')
+                    ny_timezone = timezone(timedelta(hours=-4))  # UTC-4 for New York
+                    created_at_ny = created_at.astimezone(ny_timezone)
+                    ticket['created_at_formatted'] = created_at_ny.strftime('%Y-%m-%d %H:%M:%S EST')
                     
-                    # Truncate long subjects
-                    if len(ticket.get('subject', '')) > 50:
-                        ticket['subject_short'] = ticket['subject'][:50] + '...'
+                    # Format updated date
+                    if ticket.get('updated_at'):
+                        updated_at = datetime.fromisoformat(ticket['updated_at'].replace('Z', '+00:00'))
+                        updated_at_ny = updated_at.astimezone(ny_timezone)
+                        ticket['updated_at_formatted'] = updated_at_ny.strftime('%Y-%m-%d %H:%M:%S EST')
+                    
+                    # Truncate long subjects and descriptions
+                    if len(ticket.get('subject', '')) > 80:
+                        ticket['subject_short'] = ticket['subject'][:80] + '...'
                     else:
                         ticket['subject_short'] = ticket.get('subject', 'No subject')
+                    
+                    # Truncate description
+                    description = ticket.get('description', 'No description')
+                    if len(description) > 150:
+                        ticket['description_short'] = description[:150] + '...'
+                    else:
+                        ticket['description_short'] = description
+                    
+                    # Format requester and assignee names
+                    ticket['requester_name'] = ticket.get('requester', {}).get('name', 'Unknown') if isinstance(ticket.get('requester'), dict) else 'Unknown'
+                    ticket['assignee_name'] = ticket.get('assignee', {}).get('name', 'Unassigned') if isinstance(ticket.get('assignee'), dict) else 'Unassigned'
                         
             else:
                 tickets_error = f"API Error: {response.status_code}"

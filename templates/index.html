@@ -47,7 +47,7 @@
         }
         .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 24px;
             margin-bottom: 32px;
         }
@@ -447,6 +447,19 @@
                 </ul>
             </div>
 
+            <div class="card">
+                <h3><span class="icon">🚀</span>Quick Start</h3>
+                <p><strong>Test the webhook endpoint:</strong></p>
+                <div class="endpoint">
+                    curl -X POST http://127.0.0.1:5000/zendesk-webhook \<br>
+                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                    &nbsp;&nbsp;-d '{"ticket":{"id":12345}}'
+                </div>
+                <p><strong>Configure Zendesk webhook:</strong></p>
+                <p>Point your Zendesk webhook to:<br>
+                <code>http://your-server:5000/zendesk-webhook</code></p>
+            </div>
+
             <div class="card tickets-card">
                 <h3><span class="icon">🎫</span>Recent Tickets</h3>
                 {% if tickets_error %}
@@ -497,21 +510,7 @@
                 {% endif %}
             </div>
 
-            <div class="card">
-                <h3><span class="icon">🚀</span>Quick Start</h3>
-                <p><strong>Test the webhook endpoint:</strong></p>
-                <div class="endpoint">
-                    curl -X POST http://127.0.0.1:5000/zendesk-webhook \<br>
-                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
-                    &nbsp;&nbsp;-d '{"ticket":{"id":12345}}'
-                </div>
-                <p><strong>Configure Zendesk webhook:</strong></p>
-                <p>Point your Zendesk webhook to:<br>
-                <code>http://your-server:5000/zendesk-webhook</code></p>
-            </div>
-        </div>
-
-        <div class="footer">
+            <div class="footer">
             <p>🔧 <strong>Zendesk Integration Service</strong> | Built with Flask & Python</p>
             <p>📚 Check the README.md for detailed documentation and setup instructions</p>
         </div>

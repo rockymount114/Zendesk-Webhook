@@ -16,20 +16,7 @@ ZENDESK_USER = os.getenv("ZENDESK_USER")
 # Set Zendesk API credentials
 auth = (f"{ZENDESK_USER}/token", ZENDESK_API_KEY)
 
-def get_user_name(user_id):
-    if not user_id:
-        return "Unknown"
-    try:
-        url = f"{ZENDESK_BASE_URL}/api/v2/users/{user_id}.json"
-        headers = {"Content-Type": "application/json"}
-        response = requests.get(url, auth=auth, headers=headers)
-        if response.status_code == 200:
-            return response.json().get('user', {}).get('name', 'Unknown')
-        else:
-            return "Unknown"
-    except Exception as e:
-        print(f"Error fetching user {user_id}: {e}")
-        return "Unknown"
+
 
 # Home page route
 @app.route('/')
@@ -66,6 +53,29 @@ def index():
                 print(f"Total tickets found: {len(tickets_data.get('tickets', []))}")
                 print(f"Displaying: {len(recent_tickets)} tickets")
                 
+                # Get user IDs from tickets
+                user_ids = set()
+                for ticket in recent_tickets:
+                    if ticket.get('requester_id'):
+                        user_ids.add(ticket['requester_id'])
+                    if ticket.get('assignee_id'):
+                        user_ids.add(ticket['assignee_id'])
+                
+                # Fetch user names in bulk
+                users_data = {}
+                if user_ids:
+                    try:
+                        user_url = f"{ZENDESK_BASE_URL}/api/v2/users/show_many.json?ids={','.join(map(str, user_ids))}"
+                        user_response = requests.get(user_url, auth=auth, headers=headers)
+                        if user_response.status_code == 200:
+                            users = user_response.json().get('users', [])
+                            for user in users:
+                                users_data[user['id']] = user['name']
+                        else:
+                            print(f"Error fetching users: {user_response.status_code}")
+                    except Exception as e:
+                        print(f"Error fetching users: {e}")
+
                 # Format ticket data for display
                 for ticket in recent_tickets:
                     # Format the created date to New York time (UTC-4)
@@ -95,9 +105,8 @@ def index():
                         ticket['description_short'] = description
                     
                     # Format requester and assignee names
-                    ticket['requester_name'] = get_user_name(ticket.get('requester_id'))
-                    ticket['assignee_name'] = get_user_name(ticket.get('assignee_id'))
-                    # print(ticket.get('requester_id'))
+                    ticket['requester_name'] = users_data.get(ticket.get('requester_id'), 'Unknown')
+                    ticket['assignee_name'] = users_data.get(ticket.get('assignee_id'), 'Unassigned')
                         
             else:
                 tickets_error = f"API Error: {response.status_code}"

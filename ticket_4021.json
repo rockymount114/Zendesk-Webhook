@@ -1,0 +1,360 @@
+{
+    "url": "https://rockymountnchelp.zendesk.com/api/v2/tickets/4021.json",
+    "id": 4021,
+    "external_id": null,
+    "via": {
+        "channel": "email",
+        "source": {
+            "from": {
+                "address": "brenda.williams@rockymountnc.gov",
+                "name": "Brenda Williams"
+            },
+            "to": {
+                "name": "City of Rocky Mount Technology Services",
+                "address": "support@rockymountnchelp.zendesk.com"
+            },
+            "rel": null
+        }
+    },
+    "created_at": "2022-10-19T16:56:02Z",
+    "updated_at": "2022-10-19T17:25:54Z",
+    "generated_timestamp": 1666200354,
+    "type": null,
+    "subject": "Missing Applications",
+    "raw_subject": "Missing Applications",
+    "description": "The 6th workstation is hooked up but there is no CIS application, and the GIS application should have the outage tracker but it's missing. This is the application it is missing shown below. The energy resources icon is also missing shown below-\r\n\r\n[cid:025f90f8-cef2-4959-9159-943a53f137b7]\r\n\r\n[cid:e29ee770-8419-4de8-bfa5-22f3d10e201c]\r\n\r\n\r\n\u200bThanks,\r\n\r\n\r\nBrenda D Williams\r\n\r\nEnergy Control Supervisor\r\n\r\nCity of Rocky Mount\r\n\r\nDepartment of Energy Resources\r\n\r\nPh: 252.467.4802\r\n\r\nFax: 252.467.4899\r\n\r\nBrenda.Williams@rockymountnc.gov<mailto:Brenda.Williams@rockymountnc.gov>\r\n\r\n\r\n[City logo for email signature resolution fixed]\r\n\r\nPlease note that e-mail sent to and from this address is subject to the North Carolina Public Records Law and may be disclosed to third parties.",
+    "priority": null,
+    "status": "open",
+    "recipient": "support@rockymountnchelp.zendesk.com",
+    "requester_id": 419242808332,
+    "submitter_id": 419242808332,
+    "assignee_id": 411048030951,
+    "organization_id": 361534546112,
+    "group_id": 360015851692,
+    "collaborator_ids": [
+        1900892652147,
+        7798594934797,
+        5894186066317,
+        411665074311
+    ],
+    "follower_ids": [
+        1900892652147,
+        7798594934797,
+        5894186066317
+    ],
+    "email_cc_ids": [
+        411665074311
+    ],
+    "forum_topic_id": null,
+    "problem_id": null,
+    "has_incidents": false,
+    "is_public": true,
+    "due_at": null,
+    "tags": [
+        "software"
+    ],
+    "custom_fields": [
+        {
+            "id": 360041074251,
+            "value": null
+        },
+        {
+            "id": 360041123652,
+            "value": "software"
+        },
+        {
+            "id": 360041073071,
+            "value": null
+        },
+        {
+            "id": 33878886774797,
+            "value": null
+        },
+        {
+            "id": 38102712020493,
+            "value": null
+        },
+        {
+            "id": 33878921256589,
+            "value": null
+        },
+        {
+            "id": 33878928561421,
+            "value": null
+        },
+        {
+            "id": 33878954273549,
+            "value": null
+        },
+        {
+            "id": 33878970836365,
+            "value": null
+        },
+        {
+            "id": 33879300055053,
+            "value": null
+        },
+        {
+            "id": 33879341886861,
+            "value": null
+        },
+        {
+            "id": 33881436584461,
+            "value": null
+        },
+        {
+            "id": 35942810463117,
+            "value": null
+        },
+        {
+            "id": 35943816577933,
+            "value": null
+        },
+        {
+            "id": 35944262820365,
+            "value": null
+        },
+        {
+            "id": 35944270435597,
+            "value": null
+        },
+        {
+            "id": 35944462454669,
+            "value": null
+        },
+        {
+            "id": 36026029820429,
+            "value": null
+        },
+        {
+            "id": 36026074698253,
+            "value": null
+        },
+        {
+            "id": 23769966749837,
+            "value": false
+        },
+        {
+            "id": 16954261283085,
+            "value": null
+        },
+        {
+            "id": 16954446436365,
+            "value": null
+        },
+        {
+            "id": 16956546117645,
+            "value": null
+        },
+        {
+            "id": 20842245168653,
+            "value": null
+        },
+        {
+            "id": 20842443618189,
+            "value": null
+        },
+        {
+            "id": 23519600136461,
+            "value": null
+        },
+        {
+            "id": 23768185999501,
+            "value": null
+        },
+        {
+            "id": 23768720809997,
+            "value": null
+        },
+        {
+            "id": 33878874351629,
+            "value": null
+        },
+        {
+            "id": 23770011789197,
+            "value": false
+        },
+        {
+            "id": 23770079956621,
+            "value": false
+        },
+        {
+            "id": 23771250912013,
+            "value": false
+        },
+        {
+            "id": 23771314675981,
+            "value": false
+        },
+        {
+            "id": 23771348455821,
+            "value": false
+        },
+        {
+            "id": 33878818036749,
+            "value": null
+        },
+        {
+            "id": 33878871038349,
+            "value": null
+        }
+    ],
+    "satisfaction_rating": {
+        "score": "unoffered"
+    },
+    "sharing_agreement_ids": [],
+    "custom_status_id": 6640211,
+    "encoded_id": "WL69D9-VENWP",
+    "fields": [
+        {
+            "id": 360041074251,
+            "value": null
+        },
+        {
+            "id": 360041123652,
+            "value": "software"
+        },
+        {
+            "id": 360041073071,
+            "value": null
+        },
+        {
+            "id": 33878886774797,
+            "value": null
+        },
+        {
+            "id": 38102712020493,
+            "value": null
+        },
+        {
+            "id": 33878921256589,
+            "value": null
+        },
+        {
+            "id": 33878928561421,
+            "value": null
+        },
+        {
+            "id": 33878954273549,
+            "value": null
+        },
+        {
+            "id": 33878970836365,
+            "value": null
+        },
+        {
+            "id": 33879300055053,
+            "value": null
+        },
+        {
+            "id": 33879341886861,
+            "value": null
+        },
+        {
+            "id": 33881436584461,
+            "value": null
+        },
+        {
+            "id": 35942810463117,
+            "value": null
+        },
+        {
+            "id": 35943816577933,
+            "value": null
+        },
+        {
+            "id": 35944262820365,
+            "value": null
+        },
+        {
+            "id": 35944270435597,
+            "value": null
+        },
+        {
+            "id": 35944462454669,
+            "value": null
+        },
+        {
+            "id": 36026029820429,
+            "value": null
+        },
+        {
+            "id": 36026074698253,
+            "value": null
+        },
+        {
+            "id": 23769966749837,
+            "value": false
+        },
+        {
+            "id": 16954261283085,
+            "value": null
+        },
+        {
+            "id": 16954446436365,
+            "value": null
+        },
+        {
+            "id": 16956546117645,
+            "value": null
+        },
+        {
+            "id": 20842245168653,
+            "value": null
+        },
+        {
+            "id": 20842443618189,
+            "value": null
+        },
+        {
+            "id": 23519600136461,
+            "value": null
+        },
+        {
+            "id": 23768185999501,
+            "value": null
+        },
+        {
+            "id": 23768720809997,
+            "value": null
+        },
+        {
+            "id": 33878874351629,
+            "value": null
+        },
+        {
+            "id": 23770011789197,
+            "value": false
+        },
+        {
+            "id": 23770079956621,
+            "value": false
+        },
+        {
+            "id": 23771250912013,
+            "value": false
+        },
+        {
+            "id": 23771314675981,
+            "value": false
+        },
+        {
+            "id": 23771348455821,
+            "value": false
+        },
+        {
+            "id": 33878818036749,
+            "value": null
+        },
+        {
+            "id": 33878871038349,
+            "value": null
+        }
+    ],
+    "followup_ids": [],
+    "ticket_form_id": 360001363552,
+    "brand_id": 360005221552,
+    "allow_channelback": false,
+    "allow_attachments": true,
+    "from_messaging_channel": false
+}

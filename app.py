@@ -82,6 +82,7 @@ def index():
                     # Format requester and assignee names
                     ticket['requester_name'] = ticket.get('requester', {}).get('name', 'Unknown') if isinstance(ticket.get('requester'), dict) else 'Unknown'
                     ticket['assignee_name'] = ticket.get('assignee', {}).get('name', 'Unassigned') if isinstance(ticket.get('assignee'), dict) else 'Unassigned'
+                    print(ticket.get('requester_id'))
                         
             else:
                 tickets_error = f"API Error: {response.status_code}"

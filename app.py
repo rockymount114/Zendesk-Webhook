@@ -16,6 +16,21 @@ ZENDESK_USER = os.getenv("ZENDESK_USER")
 # Set Zendesk API credentials
 auth = (f"{ZENDESK_USER}/token", ZENDESK_API_KEY)
 
+def get_user_name(user_id):
+    if not user_id:
+        return "Unknown"
+    try:
+        url = f"{ZENDESK_BASE_URL}/api/v2/users/{user_id}.json"
+        headers = {"Content-Type": "application/json"}
+        response = requests.get(url, auth=auth, headers=headers)
+        if response.status_code == 200:
+            return response.json().get('user', {}).get('name', 'Unknown')
+        else:
+            return "Unknown"
+    except Exception as e:
+        print(f"Error fetching user {user_id}: {e}")
+        return "Unknown"
+
 # Home page route
 @app.route('/')
 def index():
@@ -80,9 +95,9 @@ def index():
                         ticket['description_short'] = description
                     
                     # Format requester and assignee names
-                    ticket['requester_name'] = ticket.get('requester', {}).get('name', 'Unknown') if isinstance(ticket.get('requester'), dict) else 'Unknown'
-                    ticket['assignee_name'] = ticket.get('assignee', {}).get('name', 'Unassigned') if isinstance(ticket.get('assignee'), dict) else 'Unassigned'
-                    print(ticket.get('requester_id'))
+                    ticket['requester_name'] = get_user_name(ticket.get('requester_id'))
+                    ticket['assignee_name'] = get_user_name(ticket.get('assignee_id'))
+                    # print(ticket.get('requester_id'))
                         
             else:
                 tickets_error = f"API Error: {response.status_code}"

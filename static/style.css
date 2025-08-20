@@ -20,8 +20,8 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 16px;
-            padding: 40px;
-            margin-bottom: 32px;
+            padding: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             text-align: center;
@@ -39,11 +39,10 @@
             margin: 0;
             font-weight: 400;
         }
-        .cards {
+                .cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 12px;
-            margin-bottom: 32px;
         }
 
         @media (min-width: 992px) {
@@ -112,18 +111,19 @@
             font-size: 0.95em;
             font-weight: bold;
         }
-        .footer {
+        .footer-card {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 16px;
-            padding: 24px;
+            padding: 12px;
             text-align: center;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
             justify-content: center;
             align-items: center;
+            margin-top: 10px;
         }
         .config-item {
             display: flex;

@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+prompt_plan.md
+.CLAUDE.MD
+.GEMINI.MD
 # C extensions
 *.so
 

@@ -30,7 +30,7 @@
             color: #1d1d1f;
             margin: 0 0 12px 0;
             font-size: 2em;
-            font-weight: 600;
+            font-weight: 300;
             letter-spacing: -0.02em;
         }
         .header p {
@@ -39,10 +39,10 @@
             margin: 0;
             font-weight: 400;
         }
-                .cards {
+        .cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 12px;
+            gap: 10px;
         }
 
         @media (min-width: 992px) {
@@ -74,7 +74,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1.1em;
+            font-size: 0.95em;
         }
         .icon {
             font-size: 1.5em;

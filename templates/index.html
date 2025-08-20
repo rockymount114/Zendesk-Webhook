@@ -31,25 +31,7 @@
                 </div>
             </div>
 
-            <div class="card">
-                <h3><span class="icon">⚙️</span>Configuration</h3>
-                <div class="config-item">
-                    <span class="config-label">Zendesk Domain:</span>
-                    <span class="config-value">{{ zendesk_domain }}</span>
-                </div>
-                <div class="config-item">
-                    <span class="config-label">API User:</span>
-                    <span class="config-value">{{ zendesk_user }}</span>
-                </div>
-                <div class="config-item">
-                    <span class="config-label">API Key:</span>
-                    <span class="config-value masked">{{ api_key_status }}</span>
-                </div>
-                <div class="config-item">
-                    <span class="config-label">Status:</span>
-                    <span class="status configured">{{ config_status }}</span>
-                </div>
-            </div>
+            
 
             <div class="card">
                 <h3><span class="icon">📊</span>Service Features</h3>
@@ -71,9 +53,7 @@
                     &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
                     &nbsp;&nbsp;-d '{"ticket":{"id":12345}}'
                 </div>
-                <p><strong>Configure Zendesk webhook:</strong></p>
-                <p>Point your Zendesk webhook to:<br>
-                <code>http://your-server:5000/zendesk-webhook</code></p>
+
             </div>
 
             <div class="card tickets-card">

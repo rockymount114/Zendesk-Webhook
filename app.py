@@ -168,7 +168,8 @@ def handle_zendesk_webhook():
         print(f"New ticket created: {ticket_id}")
 
         # Return a success response
-        return jsonify({"message": "Webhook received successfully"}), 200
+        return jsonify({"message": "Webhook received successfully",
+                        "data": ticket_data}), 200
     except Exception as e:
         # Handle any errors
         print(f"Error processing webhook: {e}")

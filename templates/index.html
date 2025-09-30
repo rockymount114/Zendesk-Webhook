@@ -70,6 +70,7 @@
                             <div class="ticket-header">
                                 <div class="ticket-main-info">
                                     <span class="ticket-id">#{{ ticket.id }}</span>
+                                    <a class="ticket-id" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank">></a>
                                     <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
                                     <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
                                 </div>

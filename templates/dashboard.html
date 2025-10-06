@@ -1,0 +1,20 @@
+<form method="post">
+  Start Date:
+  <input type="date" name="start_date" value="{{ start_date }}" required>
+  End Date:
+  <input type="date" name="end_date" value="{{ end_date }}" required>
+  <button type="submit">Show KPIs</button>
+</form>
+
+{% if error %}
+  <div style="color:red; margin-top:10px;">{{ error }}</div>
+{% endif %}
+
+{% if stats %}
+<div class="kpi-cards" style="display:flex; gap:1em; margin-top:1em;">
+  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Total: {{ stats['total'] }}</div>
+  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Open: {{ stats['open'] }}</div>
+  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Pending: {{ stats['pending'] }}</div>
+  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Closed: {{ stats['closed'] }}</div>
+</div>
+{% endif %}

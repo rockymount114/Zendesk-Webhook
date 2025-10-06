@@ -250,6 +250,10 @@ def dashboard():
     if stats:
         open_tickets = stats.get('open_tickets', [])
         pending_tickets = stats.get('pending_tickets', [])
+
+        # Sort tickets by creation date in descending order
+        open_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
+        pending_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         
         # Combine tickets to fetch user data in one go
         all_tickets = open_tickets + pending_tickets
@@ -264,22 +268,31 @@ def dashboard():
 
             users_data = {}
             if user_ids:
-                try:
-                    user_url = f"https://{BASE_DOMAIN}/api/v2/users/show_many.json?ids={','.join(map(str, user_ids))}"
-                    headers = {"Content-Type": "application/json"}
-                    user_response = requests.get(user_url, auth=auth, headers=headers)
-                    if user_response.status_code == 200:
-                        users = user_response.json().get('users', [])
-                        for user in users:
-                            users_data[user['id']] = user['name']
-                except Exception as e:
-                    print(f"Error fetching users for dashboard: {e}")
+                user_id_list = list(user_ids)
+                chunk_size = 100
+                for i in range(0, len(user_id_list), chunk_size):
+                    chunk = user_id_list[i:i + chunk_size]
+                    try:
+                        user_url = f"https://{BASE_DOMAIN}/api/v2/users/show_many.json?ids={','.join(map(str, chunk))}"
+                        headers = {"Content-Type": "application/json"}
+                        user_response = requests.get(user_url, auth=auth, headers=headers)
+                        if user_response.status_code == 200:
+                            users = user_response.json().get('users', [])
+                            for user in users:
+                                users_data[user['id']] = user['name']
+                        else:
+                            print(f"Error fetching user chunk: Status {user_response.status_code}")
+                    except Exception as e:
+                        print(f"Error fetching users for dashboard: {e}")
 
             # Format ticket fields for display
             ny_timezone = timezone(timedelta(hours=-4))
             for ticket in all_tickets:
-                created_at = datetime.fromisoformat(ticket['created_at'].replace('Z', '+00:00'))
-                ticket['created_at_formatted'] = created_at.astimezone(ny_timezone).strftime('%Y-%m-%d %H:%M:%S EST')
+                if ticket.get('created_at'):
+                    created_at = datetime.fromisoformat(ticket['created_at'].replace('Z', '+00:00'))
+                    ticket['created_at_formatted'] = created_at.astimezone(ny_timezone).strftime('%Y-%m-%d %H:%M:%S EST')
+                else:
+                    ticket['created_at_formatted'] = 'N/A'
 
                 if ticket.get('updated_at'):
                     updated_at = datetime.fromisoformat(ticket['updated_at'].replace('Z', '+00:00'))

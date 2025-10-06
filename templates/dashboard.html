@@ -1,20 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zendesk Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 2em; background-color: #f9f9f9; color: #333; }
+        .kpi-cards { display: flex; gap: 1em; margin-top: 1em; flex-wrap: wrap; }
+        .card { background: #fff; padding: 2em; border-radius: 12px; min-width: 150px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5e5; }
+        .card-title { font-size: 1.2em; color: #555; }
+        .card-value { font-size: 2.5em; font-weight: 600; margin-top: 0.2em; }
+        form { background: #fff; padding: 1.5em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5e5; display: flex; align-items: center; gap: 1em; }
+        input[type="date"], button { font-size: 1em; padding: 0.5em 1em; border-radius: 8px; border: 1px solid #ccc; }
+        button { background-color: #007aff; color: white; border-color: #007aff; cursor: pointer; font-weight: 500; }
+        h2 { font-weight: 600; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.5em; margin-top: 2em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1em; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5e5; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e5e5e5; }
+        thead tr { background-color: #f2f2f2; }
+        tbody tr:hover { background-color: #f5f5f5; }
+        a { color: #007aff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<h1>Zendesk KPIs</h1>
+
 <form method="post">
-  Start Date:
-  <input type="date" name="start_date" value="{{ start_date }}" required>
-  End Date:
-  <input type="date" name="end_date" value="{{ end_date }}" required>
+  <label for="start_date">Start Date:</label>
+  <input type="date" id="start_date" name="start_date" value="{{ start_date }}" required>
+  <label for="end_date">End Date:</label>
+  <input type="date" id="end_date" name="end_date" value="{{ end_date }}" required>
   <button type="submit">Show KPIs</button>
 </form>
 
 {% if error %}
-  <div style="color:red; margin-top:10px;">{{ error }}</div>
+  <div style="color:red; margin-top:10px; background: #ffebee; padding: 1em; border-radius: 8px;"><strong>Error:</strong> {{ error }}</div>
 {% endif %}
 
 {% if stats %}
-<div class="kpi-cards" style="display:flex; gap:1em; margin-top:1em;">
-  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Total: {{ stats['total'] }}</div>
-  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Open: {{ stats['open'] }}</div>
-  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Pending: {{ stats['pending'] }}</div>
-  <div class="card" style="background:#f4f4f4; padding:2em; border-radius:8px; min-width:120px; text-align:center;">Closed: {{ stats['closed'] }}</div>
+<div class="kpi-cards">
+  <div class="card"><div class="card-title">Total</div><div class="card-value">{{ stats['total'] }}</div></div>
+  <div class="card"><div class="card-title">Open</div><div class="card-value">{{ stats['open'] }}</div></div>
+  <div class="card"><div class="card-title">Pending</div><div class="card-value">{{ stats['pending'] }}</div></div>
+  <div class="card"><div class="card-title">Closed</div><div class="card-value">{{ stats['closed'] }}</div></div>
 </div>
 {% endif %}
+
+{% if open_tickets %}
+  <h2>Open Tickets ({{ stats['open'] }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Subject</th>
+        <th>Requester</th>
+        <th>Assignee</th>
+        <th>Priority</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in open_tickets %}
+      <tr>
+        <td><a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank">{{ ticket.id }}</a></td>
+        <td title="{{ ticket.description }}">{{ ticket.subject_short }}</td>
+        <td>{{ ticket.requester_name }}</td>
+        <td>{{ ticket.assignee_name }}</td>
+        <td>{{ ticket.priority | default('N/A') | capitalize }}</td>
+        <td>{{ ticket.created_at_formatted }}</td>
+        <td>{{ ticket.updated_at_formatted }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+{% if pending_tickets %}
+  <h2>Pending Tickets ({{ stats['pending'] }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Subject</th>
+        <th>Requester</th>
+        <th>Assignee</th>
+        <th>Priority</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in pending_tickets %}
+      <tr>
+        <td><a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank">{{ ticket.id }}</a></td>
+        <td title="{{ ticket.description }}">{{ ticket.subject_short }}</td>
+        <td>{{ ticket.requester_name }}</td>
+        <td>{{ ticket.assignee_name }}</td>
+        <td>{{ ticket.priority | default('N/A') | capitalize }}</td>
+        <td>{{ ticket.created_at_formatted }}</td>
+        <td>{{ ticket.updated_at_formatted }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+</body>
+</html>

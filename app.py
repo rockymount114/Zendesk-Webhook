@@ -169,54 +169,65 @@ def get_ticket_counts(start_date: str, end_date: str):
     if sd > ed:
         return {"error": "Start date cannot be after end date"}, 422
 
-    start_ts = f"{sd.isoformat()}T00:00:00Z"
-    end_ts = f"{ed.isoformat()}T23:59:59Z"
+    total_stats = {
+        'total': 0, 'open': 0, 'pending': 0, 'closed': 0,
+        'open_tickets': [], 'pending_tickets': []
+    }
 
-    query = f'type:ticket created>={start_ts} created<={end_ts}'
-    # print("Search query:", query)
-
-    stats = {'total': 0, 'open': 0, 'pending': 0, 'closed': 0}
-
-    base_url = f"https://{BASE_DOMAIN}/api/v2/search.json"
-
-    # 1) Initial request with params
-    resp = requests.get(base_url, headers=headers, params={'query': query}, auth=auth)
-    # print("First resp:", resp.status_code, resp.text[:300])
-    if resp.status_code != 200:
-        return stats, resp.status_code
-
-    data = resp.json()
-
-    def accumulate(page_data):
+    # Helper to accumulate stats for a page of results
+    def accumulate_page_stats(page_data, stats_accumulator):
         for t in page_data.get('results', []):
-            stats['total'] += 1
+            stats_accumulator['total'] += 1
             status = (t.get('status') or '').lower()
-            if status in stats:
-                stats[status] += 1
+            if status in stats_accumulator:
+                stats_accumulator[status] += 1
+            
+            if status == 'open':
+                stats_accumulator['open_tickets'].append(t)
+            elif status == 'pending':
+                stats_accumulator['pending_tickets'].append(t)
 
-    # Accumulate first page
-    accumulate(data)
+    current_start = sd
+    while current_start <= ed:
+        # Chunk date range into 60-day intervals to avoid API errors
+        current_end = current_start + timedelta(days=59)
+        if current_end > ed:
+            current_end = ed
 
-    # 2) Follow next_page strictly as returned; no params on subsequent calls
-    next_page = data.get('next_page')
-    while next_page:
-        print("Fetching next_page:", next_page)
-        # Important: do NOT pass params here
-        resp = requests.get(next_page, headers=headers, auth=auth)
-        # print("Next resp:", resp.status_code, resp.text[:200])
+        start_ts = f"{current_start.isoformat()}T00:00:00Z"
+        end_ts = f"{current_end.isoformat()}T23:59:59Z"
+        query = f'type:ticket created>={start_ts} created<={end_ts}'
+        
+        base_url = f"https://{BASE_DOMAIN}/api/v2/search.json"
+        
+        resp = requests.get(base_url, headers=headers, params={'query': query}, auth=auth)
+        
         if resp.status_code != 200:
-            return stats, resp.status_code
-        data = resp.json()
-        accumulate(data)
-        next_page = data.get('next_page')
+            return total_stats, resp.status_code
 
-    return stats, 200
+        data = resp.json()
+        accumulate_page_stats(data, total_stats)
+
+        next_page = data.get('next_page')
+        while next_page:
+            resp_page = requests.get(next_page, headers=headers, auth=auth)
+            if resp_page.status_code != 200:
+                break
+            page_data = resp_page.json()
+            accumulate_page_stats(page_data, total_stats)
+            next_page = page_data.get('next_page')
+
+        current_start = current_end + timedelta(days=1)
+
+    return total_stats, 200
 
 # ---------- Dashboard route at /dashboard ----------
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     stats = None
     error = None
+    open_tickets = []
+    pending_tickets = []
 
     today = date.today()
     default_start = date(today.year, 1, 1).isoformat()
@@ -235,12 +246,64 @@ def dashboard():
         error = stats["error"]
     elif status_code != 200:
         error = f"Zendesk API returned status {status_code}"
+    
+    if stats:
+        open_tickets = stats.get('open_tickets', [])
+        pending_tickets = stats.get('pending_tickets', [])
+        
+        # Combine tickets to fetch user data in one go
+        all_tickets = open_tickets + pending_tickets
+        
+        if all_tickets and BASE_DOMAIN and auth:
+            user_ids = set()
+            for ticket in all_tickets:
+                if ticket.get('requester_id'):
+                    user_ids.add(ticket['requester_id'])
+                if ticket.get('assignee_id'):
+                    user_ids.add(ticket['assignee_id'])
+
+            users_data = {}
+            if user_ids:
+                try:
+                    user_url = f"https://{BASE_DOMAIN}/api/v2/users/show_many.json?ids={','.join(map(str, user_ids))}"
+                    headers = {"Content-Type": "application/json"}
+                    user_response = requests.get(user_url, auth=auth, headers=headers)
+                    if user_response.status_code == 200:
+                        users = user_response.json().get('users', [])
+                        for user in users:
+                            users_data[user['id']] = user['name']
+                except Exception as e:
+                    print(f"Error fetching users for dashboard: {e}")
+
+            # Format ticket fields for display
+            ny_timezone = timezone(timedelta(hours=-4))
+            for ticket in all_tickets:
+                created_at = datetime.fromisoformat(ticket['created_at'].replace('Z', '+00:00'))
+                ticket['created_at_formatted'] = created_at.astimezone(ny_timezone).strftime('%Y-%m-%d %H:%M:%S EST')
+
+                if ticket.get('updated_at'):
+                    updated_at = datetime.fromisoformat(ticket['updated_at'].replace('Z', '+00:00'))
+                    ticket['updated_at_formatted'] = updated_at.astimezone(ny_timezone).strftime('%Y-%m-%d %H:%M:%S EST')
+                else:
+                    ticket['updated_at_formatted'] = 'N/A'
+
+
+                subject = ticket.get('subject', 'No subject')
+                ticket['subject_short'] = subject[:80] + ('...' if len(subject) > 80 else '')
+                description = ticket.get('description', 'No description')
+                ticket['description'] = description
+
+                ticket['requester_name'] = users_data.get(ticket.get('requester_id'), 'Unknown')
+                ticket['assignee_name'] = users_data.get(ticket.get('assignee_id'), 'Unassigned')
 
     return render_template('dashboard.html',
                            stats=stats,
                            error=error,
                            start_date=start_date,
-                           end_date=end_date)
+                           end_date=end_date,
+                           open_tickets=open_tickets,
+                           pending_tickets=pending_tickets,
+                           zendesk_domain=BASE_DOMAIN)
 
 if __name__ == '__main__':
     app.run(debug=True)

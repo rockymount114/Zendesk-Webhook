@@ -7,9 +7,10 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 2em; background-color: #f9f9f9; color: #333; }
         .kpi-cards { display: flex; gap: 1em; margin-top: 1em; flex-wrap: wrap; }
-        .card { background: #fff; padding: 2em; border-radius: 12px; min-width: 150px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5e5; }
-        .card-title { font-size: 1.2em; color: #555; }
-        .card-value { font-size: 2.5em; font-weight: 600; margin-top: 0.2em; }
+        .card { background: #fff; padding: 1.5em; border-radius: 12px; min-width: 150px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5e5; flex: 1; }
+        .card-title { font-size: 1.1em; color: #555; }
+        .card-value { font-size: 2.2em; font-weight: 600; margin-top: 0.2em; }
+        .card-perc { font-size: 0.9em; font-weight: 500; color: #888; margin-top: 0.4em; }
         form { background: #fff; padding: 1.5em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e5e5e5; display: flex; align-items: center; gap: 1em; }
         input[type="date"], button { font-size: 1em; padding: 0.5em 1em; border-radius: 8px; border: 1px solid #ccc; }
         button { background-color: #007aff; color: white; border-color: #007aff; cursor: pointer; font-weight: 500; }
@@ -40,10 +41,31 @@
 
 {% if stats %}
 <div class="kpi-cards">
-  <div class="card"><div class="card-title">Total</div><div class="card-value">{{ stats['total'] }}</div></div>
-  <div class="card"><div class="card-title">Open</div><div class="card-value">{{ stats['open'] }}</div></div>
-  <div class="card"><div class="card-title">Pending</div><div class="card-value">{{ stats['pending'] }}</div></div>
-  <div class="card"><div class="card-title">Closed</div><div class="card-value">{{ stats['closed'] }}</div></div>
+  <div class="card">
+    <div class="card-title">Total</div>
+    <div class="card-value">{{ stats['total'] }}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Open</div>
+    <div class="card-value">{{ stats['open'] }}</div>
+    {% if open_perc is defined %}
+    <div class="card-perc">{{ "%.1f"|format(open_perc) }}%</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-title">Pending</div>
+    <div class="card-value">{{ stats['pending'] }}</div>
+    {% if pending_perc is defined %}
+    <div class="card-perc">{{ "%.1f"|format(pending_perc) }}%</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-title">Closed</div>
+    <div class="card-value">{{ stats['closed'] }}</div>
+    {% if closed_perc is defined %}
+    <div class="card-perc">{{ "%.1f"|format(closed_perc) }}%</div>
+    {% endif %}
+  </div>
 </div>
 {% endif %}
 

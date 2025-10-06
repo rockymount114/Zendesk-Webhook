@@ -228,9 +228,12 @@ def dashboard():
     error = None
     open_tickets = []
     pending_tickets = []
+    open_perc = 0
+    pending_perc = 0
+    closed_perc = 0
 
     today = date.today()
-    default_start = date(today.year, 1, 1).isoformat()
+    default_start = date(today.year, today.month, 1).isoformat()
     default_end = today.isoformat()
 
     if request.method == 'POST':
@@ -248,6 +251,12 @@ def dashboard():
         error = f"Zendesk API returned status {status_code}"
     
     if stats:
+        total_count = stats.get('total', 0)
+        if total_count > 0:
+            open_perc = (stats.get('open', 0) / total_count) * 100
+            pending_perc = (stats.get('pending', 0) / total_count) * 100
+            closed_perc = (stats.get('closed', 0) / total_count) * 100
+
         open_tickets = stats.get('open_tickets', [])
         pending_tickets = stats.get('pending_tickets', [])
 
@@ -256,7 +265,8 @@ def dashboard():
         pending_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         
         # Combine tickets to fetch user data in one go
-        all_tickets = open_tickets + pending_tickets
+        all_tickets = open_tickets + pending_tickets       
+        
         
         if all_tickets and BASE_DOMAIN and auth:
             user_ids = set()
@@ -308,7 +318,7 @@ def dashboard():
 
                 ticket['requester_name'] = users_data.get(ticket.get('requester_id'), 'Unknown')
                 ticket['assignee_name'] = users_data.get(ticket.get('assignee_id'), 'Unassigned')
-
+            
     return render_template('dashboard.html',
                            stats=stats,
                            error=error,
@@ -316,6 +326,9 @@ def dashboard():
                            end_date=end_date,
                            open_tickets=open_tickets,
                            pending_tickets=pending_tickets,
+                           open_perc=open_perc,
+                           pending_perc=pending_perc,
+                           closed_perc = closed_perc,
                            zendesk_domain=BASE_DOMAIN)
 
 if __name__ == '__main__':

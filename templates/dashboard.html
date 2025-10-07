@@ -60,12 +60,34 @@
     {% endif %}
   </div>
   <div class="card">
+    <div class="card-title">Solved</div>
+    <div class="card-value">{{ stats['solved'] }}</div>
+    {% if solved_perc is defined %}
+    <div class="card-perc">{{ "%.1f"|format(solved_perc) }}%</div>
+    {% endif %}
+  </div>
+  <div class="card">
     <div class="card-title">Closed</div>
     <div class="card-value">{{ stats['closed'] }}</div>
     {% if closed_perc is defined %}
     <div class="card-perc">{{ "%.1f"|format(closed_perc) }}%</div>
     {% endif %}
   </div>
+  <div class="card">
+    <div class="card-title">New</div>
+    <div class="card-value">{{ stats['new'] }}</div>
+    {% if new_perc is defined %}
+    <div class="card-perc">{{ "%.1f"|format(new_perc) }}%</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-title">On-hold</div>
+    <div class="card-value">{{ stats['on-hold'] }}</div>
+    {% if on_hold_perc is defined %}
+    <div class="card-perc">{{ "%.1f"|format(on_hold_perc) }}%</div>
+    {% endif %}
+  </div>
+  
 </div>
 {% endif %}
 
@@ -128,6 +150,96 @@
     </tbody>
   </table>
 {% endif %}
+
+<!-- {% if new_tickets %}
+  <h2>New Tickets ({{ stats['new'] }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Subject</th>
+        <th>Requester</th>
+        <th>Assignee</th>
+        <th>Priority</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in new_tickets %}
+      <tr>
+        <td><a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank">{{ ticket.id }}</a></td>
+        <td title="{{ ticket.description }}">{{ ticket.subject_short }}</td>
+        <td>{{ ticket.requester_name }}</td>
+        <td>{{ ticket.assignee_name }}</td>
+        <td>{{ ticket.priority | default('N/A') | capitalize }}</td>
+        <td>{{ ticket.created_at_formatted }}</td>
+        <td>{{ ticket.updated_at_formatted }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %} -->
+
+{% if on_hold_tickets %}
+  <h2>On-hold Tickets ({{ stats['on-hold'] }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Subject</th>
+        <th>Requester</th>
+        <th>Assignee</th>
+        <th>Priority</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in on_hold_tickets %}
+      <tr>
+        <td><a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank">{{ ticket.id }}</a></td>
+        <td title="{{ ticket.description }}">{{ ticket.subject_short }}</td>
+        <td>{{ ticket.requester_name }}</td>
+        <td>{{ ticket.assignee_name }}</td>
+        <td>{{ ticket.priority | default('N/A') | capitalize }}</td>
+        <td>{{ ticket.created_at_formatted }}</td>
+        <td>{{ ticket.updated_at_formatted }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+<!-- {% if solved_tickets %}
+  <h2>Solved Tickets ({{ stats['solved'] }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Subject</th>
+        <th>Requester</th>
+        <th>Assignee</th>
+        <th>Priority</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in solved_tickets %}
+      <tr>
+        <td><a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank">{{ ticket.id }}</a></td>
+        <td title="{{ ticket.description }}">{{ ticket.subject_short }}</td>
+        <td>{{ ticket.requester_name }}</td>
+        <td>{{ ticket.assignee_name }}</td>
+        <td>{{ ticket.priority | default('N/A') | capitalize }}</td>
+        <td>{{ ticket.created_at_formatted }}</td>
+        <td>{{ ticket.updated_at_formatted }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %} -->
 
 </body>
 </html>

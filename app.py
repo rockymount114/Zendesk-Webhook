@@ -170,8 +170,8 @@ def get_ticket_counts(start_date: str, end_date: str):
         return {"error": "Start date cannot be after end date"}, 422
 
     total_stats = {
-        'total': 0, 'open': 0, 'pending': 0, 'closed': 0,
-        'open_tickets': [], 'pending_tickets': []
+        'total': 0, 'open': 0, 'pending': 0, 'closed': 0, 'new': 0, 'on-hold': 0, 'solved': 0,
+        'open_tickets': [], 'pending_tickets': [], 'solved_tickets': [], 'new_tickets': [], 'on_hold_tickets': [],
     }
 
     # Helper to accumulate stats for a page of results
@@ -186,6 +186,12 @@ def get_ticket_counts(start_date: str, end_date: str):
                 stats_accumulator['open_tickets'].append(t)
             elif status == 'pending':
                 stats_accumulator['pending_tickets'].append(t)
+            elif status == 'solved':
+                stats_accumulator['solved_tickets'].append(t)
+            elif status == 'new':
+                stats_accumulator['new_tickets'].append(t)
+            elif status == 'on-hold':
+                stats_accumulator['on_hold_tickets'].append(t)
 
     current_start = sd
     while current_start <= ed:
@@ -228,9 +234,13 @@ def dashboard():
     error = None
     open_tickets = []
     pending_tickets = []
+    solved_tickets = []
     open_perc = 0
     pending_perc = 0
     closed_perc = 0
+    new_perc = 0
+    on_hold_perc = 0
+    solved_perc = 0
 
     today = date.today()
     default_start = date(today.year, today.month, 1).isoformat()
@@ -256,16 +266,25 @@ def dashboard():
             open_perc = (stats.get('open', 0) / total_count) * 100
             pending_perc = (stats.get('pending', 0) / total_count) * 100
             closed_perc = (stats.get('closed', 0) / total_count) * 100
+            new_perc = (stats.get('new', 0) / total_count) * 100
+            on_hold_perc = (stats.get('on-hold', 0) / total_count) * 100
+            solved_perc = (stats.get('solved', 0) / total_count) * 100
 
         open_tickets = stats.get('open_tickets', [])
         pending_tickets = stats.get('pending_tickets', [])
+        solved_tickets = stats.get('solved_tickets', [])
+        new_tickets = stats.get('new_tickets', [])
+        on_hold_tickets = stats.get('on_hold_tickets', [])
 
         # Sort tickets by creation date in descending order
         open_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         pending_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
+        solved_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
+        new_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
+        on_hold_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         
         # Combine tickets to fetch user data in one go
-        all_tickets = open_tickets + pending_tickets       
+        all_tickets = open_tickets + pending_tickets + solved_tickets + new_tickets + on_hold_tickets      
         
         
         if all_tickets and BASE_DOMAIN and auth:
@@ -326,9 +345,15 @@ def dashboard():
                            end_date=end_date,
                            open_tickets=open_tickets,
                            pending_tickets=pending_tickets,
+                           solved_tickets=solved_tickets,
+                           new_tickets=new_tickets,
+                           on_hold_tickets=on_hold_tickets,
                            open_perc=open_perc,
                            pending_perc=pending_perc,
                            closed_perc = closed_perc,
+                           new_perc=new_perc,
+                           on_hold_perc=on_hold_perc,
+                           solved_perc=solved_perc,
                            zendesk_domain=BASE_DOMAIN)
 
 if __name__ == '__main__':

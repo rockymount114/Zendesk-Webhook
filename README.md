@@ -367,3 +367,30 @@ For issues and questions:
 **Docker build image**:
 - `docker build -t zendesk-webhook .`
 - `docker run -p 5000:5000 --env-file .env zendesk-webhook`
+- `docker compose build` or `docker compose up --build`
+
+
+
+** set variables as:
+
+ZENDESK_USER = get_secret("ZENDESK_USER")
+ZENDESK_API_KEY = get_secret("ZENDESK_API_KEY")
+SUBDOMAIN = get_secret("SUBDOMAIN")
+DB_SERVER = get_secret("DB_SERVER")
+DB_DATABASE = get_secret("DB_DATABASE")
+DB_USERNAME = get_secret("DB_USERNAME")
+DB_PASSWORD = get_secret("DB_PASSWORD")
+
+** Run on Lunix
+
+```
+docker run --rm -p 5000:5000 \
+    -v "$(pwd)/secrets/ZENDESK_USER:/run/secrets/ZENDESK_USER:ro" \
+    -v "$(pwd)/secrets/ZENDESK_API_KEY:/run/secrets/ZENDESK_API_KEY:ro" \
+    -v "$(pwd)/secrets/SUBDOMAIN:/run/secrets/SUBDOMAIN:ro" \
+    -v "$(pwd)/secrets/DB_SERVER:/run/secrets/DB_SERVER:ro" \
+    -v "$(pwd)/secrets/DB_DATABASE:/run/secrets/DB_DATABASE:ro" \
+    -v "$(pwd)/secrets/DB_USERNAME:/run/secrets/DB_USERNAME:ro" \
+    -v "$(pwd)/secrets/DB_PASSWORD:/run/secrets/DB_PASSWORD:ro" \
+    zendesk-webhook
+```

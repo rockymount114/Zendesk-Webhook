@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 ZendeskWebhook/
 *.secret
+secrets/
 prompt_plan.md
 .CLAUDE.MD
 .GEMINI.MD

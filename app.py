@@ -12,10 +12,12 @@ app = Flask(__name__)
 
 
 def get_secret(secret_name):
-    # Try to read from Docker secret file
+    # The path inside the container where Docker mounts secrets
     path = f"/run/secrets/{secret_name}"
     try:
-        with open(path) as f:
+        # Use 'utf-8-sig' to handle the BOM (Byte Order Mark) that Windows
+        # sometimes adds to text files, which causes a UnicodeDecodeError.
+        with open(path, encoding='utf-8') as f:
             return f.read().strip()
     except FileNotFoundError:
         # Fallback to environment variable if secret file not found
@@ -29,6 +31,7 @@ DB_SERVER = get_secret("DB_SERVER")
 DB_DATABASE = get_secret("DB_DATABASE")
 DB_USERNAME = get_secret("DB_USERNAME")
 DB_PASSWORD = get_secret("DB_PASSWORD")
+
 
 # Normalize base domain
 # Accept either "rockymountnchelp.zendesk.com" or full "https://rockymountnchelp.zendesk.com"

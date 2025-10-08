@@ -10,10 +10,25 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Load environment variables
-SUBDOMAIN = os.getenv("SUBDOMAIN")  # Example: rockymountnchelp.zendesk.com OR just rockymountnchelp
-ZENDESK_API_KEY = os.getenv("ZENDESK_API_KEY")
-ZENDESK_USER = os.getenv("ZENDESK_USER")
+
+def get_secret(secret_name):
+    # Try to read from Docker secret file
+    path = f"/run/secrets/{secret_name}"
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        # Fallback to environment variable if secret file not found
+        return os.getenv(secret_name)
+
+# Load secrets/environment variables
+ZENDESK_USER = get_secret("ZENDESK_USER")
+ZENDESK_API_KEY = get_secret("ZENDESK_API_KEY")
+SUBDOMAIN = get_secret("SUBDOMAIN")
+DB_SERVER = get_secret("DB_SERVER")
+DB_DATABASE = get_secret("DB_DATABASE")
+DB_USERNAME = get_secret("DB_USERNAME")
+DB_PASSWORD = get_secret("DB_PASSWORD")
 
 # Normalize base domain
 # Accept either "rockymountnchelp.zendesk.com" or full "https://rockymountnchelp.zendesk.com"

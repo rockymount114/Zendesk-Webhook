@@ -1,0 +1,9 @@
+.git
+.gitignore
+.dockerignore
+.venv
+venv
+__pycache__
+*.pyc
+secrets
+*.env

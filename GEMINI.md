@@ -83,3 +83,8 @@ ticket sample json as ticket_4021.json
 comments sample json as ticket_4021_comments.json
 
 ***get users url {ZENDESK_BASE_URL}/users/{user_id}.json***
+
+## ALWAYS RUN TEST BEFORE YOU FINISH YOUR CODE
+
+*   Always run test before you finish your code.
+*   Always sumarise your changes and write it into changes.txt

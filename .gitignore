@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 ZendeskWebhook/
-
+*.secret
 prompt_plan.md
 .CLAUDE.MD
 .GEMINI.MD
@@ -15,7 +15,6 @@ prompt_plan.md
 build/
 develop-eggs/
 dist/
-downloads/
 eggs/
 .eggs/
 lib/

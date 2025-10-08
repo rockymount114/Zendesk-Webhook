@@ -26,7 +26,7 @@ RUN pip install uv
 COPY pyproject.toml pyproject.toml
 
 # Install dependencies using uv — adjust flags if needed
-RUN uv pip install --system --upgrade -r requirements.lock
+RUN uv pip install --system --upgrade -r pyproject.toml
 
 # Copy app files
 COPY . .

@@ -361,3 +361,9 @@ For issues and questions:
 - Add authentication for sensitive endpoints
 - Configure SSL/TLS certificates
 - Set up automated backups and health checks
+
+
+
+**Docker build image**:
+- `docker build -t zendesk-webhook .`
+- `docker run -p 5000:5000 --env-file .env zendesk-webhook`

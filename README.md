@@ -381,16 +381,47 @@ DB_DATABASE = get_secret("DB_DATABASE")
 DB_USERNAME = get_secret("DB_USERNAME")
 DB_PASSWORD = get_secret("DB_PASSWORD")
 
-** Run on Lunix
+** Run on Lunix or `Portainer`
 
-```
-docker run --rm -p 5000:5000 \
-    -v "$(pwd)/secrets/ZENDESK_USER:/run/secrets/ZENDESK_USER:ro" \
-    -v "$(pwd)/secrets/ZENDESK_API_KEY:/run/secrets/ZENDESK_API_KEY:ro" \
-    -v "$(pwd)/secrets/SUBDOMAIN:/run/secrets/SUBDOMAIN:ro" \
-    -v "$(pwd)/secrets/DB_SERVER:/run/secrets/DB_SERVER:ro" \
-    -v "$(pwd)/secrets/DB_DATABASE:/run/secrets/DB_DATABASE:ro" \
-    -v "$(pwd)/secrets/DB_USERNAME:/run/secrets/DB_USERNAME:ro" \
-    -v "$(pwd)/secrets/DB_PASSWORD:/run/secrets/DB_PASSWORD:ro" \
-    zendesk-webhook
+set `secrets` then run stack with `swam`
+
+```bash
+version: "3.8"
+
+services:
+  zendesk-webhook:
+    image: zjxteusa/zendesk-webhook:latest
+    container_name: zendesk-webhook
+    ports:
+      - target: 5000
+        published: 5000
+        protocol: tcp
+        mode: host
+    restart: unless-stopped
+    secrets:
+      - SUBDOMAIN
+      - ZENDESK_API_KEY
+      - ZENDESK_USER
+      - DB_SERVER
+      - DB_DATABASE
+      - DB_USERNAME
+      - DB_PASSWORD
+
+secrets:
+  SUBDOMAIN:
+    external: true
+  ZENDESK_API_KEY:
+    external: true
+  ZENDESK_USER:
+    external: true
+  DB_SERVER:
+    external: true
+  DB_DATABASE:
+    external: true
+  DB_USERNAME:
+    external: true
+  DB_PASSWORD:
+    external: true
+
+
 ```

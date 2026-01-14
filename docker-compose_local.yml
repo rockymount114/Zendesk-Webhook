@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  zendesk-webhook:
+    build: .
+    image: zendesk-webhook:latest
+    ports:
+      - "5000:5000"
+    secrets:
+      - ZENDESK_USER
+      - ZENDESK_API_KEY
+      - SUBDOMAIN
+      - DB_SERVER
+      - DB_DATABASE
+      - DB_USERNAME
+      - DB_PASSWORD
+
+secrets:
+  ZENDESK_USER:
+    file: ./secrets/ZENDESK_USER
+  ZENDESK_API_KEY:
+    file: ./secrets/ZENDESK_API_KEY
+  SUBDOMAIN:
+    file: ./secrets/SUBDOMAIN
+  DB_SERVER:
+    file: ./secrets/DB_SERVER
+  DB_DATABASE:
+    file: ./secrets/DB_DATABASE
+  DB_USERNAME:
+    file: ./secrets/DB_USERNAME
+  DB_PASSWORD:
+    file: ./secrets/DB_PASSWORD

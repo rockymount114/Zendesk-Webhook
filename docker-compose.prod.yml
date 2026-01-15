@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  zendesk-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zendesk-dashboard:latest
+    container_name: zendesk-dashboard-prod
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Environment variables (use .env file or set here)
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    
+    # Use Docker secrets for sensitive data
+    secrets:
+      - ZENDESK_USER
+      - ZENDESK_API_KEY
+      - SUBDOMAIN
+      - DB_SERVER
+      - DB_DATABASE
+      - DB_USERNAME
+      - DB_PASSWORD
+    
+    ports:
+      - "5000:5000"
+    
+    # Volumes for logs (optional)
+    volumes:
+      - app-logs:/app/logs
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    
+    # Network
+    networks:
+      - zendesk-network
+
+# Define secrets (point to your secret files)
+secrets:
+  ZENDESK_USER:
+    file: ./secrets/ZENDESK_USER
+  ZENDESK_API_KEY:
+    file: ./secrets/ZENDESK_API_KEY
+  SUBDOMAIN:
+    file: ./secrets/SUBDOMAIN
+  DB_SERVER:
+    file: ./secrets/DB_SERVER
+  DB_DATABASE:
+    file: ./secrets/DB_DATABASE
+  DB_USERNAME:
+    file: ./secrets/DB_USERNAME
+  DB_PASSWORD:
+    file: ./secrets/DB_PASSWORD
+
+# Volumes
+volumes:
+  app-logs:
+    driver: local
+
+# Networks
+networks:
+  zendesk-network:
+    driver: bridge

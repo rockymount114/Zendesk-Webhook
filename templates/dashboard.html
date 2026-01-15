@@ -59,7 +59,7 @@
 </head>
 <body>
 
-<h1>Zendesk KPIs</h1>
+<h1>Zendesk KPIs <span style="font-size: 0.6em; color: #007aff; vertical-align: super;">{% if cache_status == 'cache_hit' %}⚡ Cached{% else %}{% if cache_status == 'api_call' %}🔄 Fresh API{% else %}📊 Local{% endif %}{% endif %}</span></h1>
 
 <form method="post">
   <label for="start_date">Start Date:</label>
@@ -70,7 +70,10 @@
 </form>
 
 {% if error %}
-  <div style="color:red; margin-top:10px; background: #ffebee; padding: 1em; border-radius: 8px;"><strong>Error:</strong> {{ error }}</div>
+  <div style="color:red; margin-top:10px; margin-bottom:15px; background: #ffebee; padding: 1em; border-radius: 8px; border-left: 4px solid #f44336;">
+    <strong>⚠️ Error:</strong> {{ error }}
+    <div style="font-size: 0.8em; margin-top: 8px; color: #666;">Tip: Check Redis connection and Zendesk API configuration.</div>
+  </div>
 {% endif %}
 
 {% if stats %}

@@ -475,6 +475,34 @@ def debug_api():
 
     return jsonify(debug_info)
 
+# ---------- Simple Status Check ----------
+@app.route('/api-status')
+def api_status():
+    """Simple API status checker for Zendesk connectivity"""
+    try:
+        if not (BASE_DOMAIN and auth):
+            return jsonify({"status": "not_configured"}), 503
+
+        # Test with a simple API call
+        test_url = f"https://{BASE_DOMAIN}/api/v2/tickets.json?per_page=1"
+        headers = {"Content-Type": "application/json"}
+        test_response = requests.get(test_url, auth=auth, headers=headers, timeout=10)
+
+        return jsonify({
+            "status": "ok" if test_response.status_code == 200 else "error",
+            "zendesk_status": test_response.status_code,
+            "domain": BASE_DOMAIN,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), test_response.status_code
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "error": str(e),
+            "domain": BASE_DOMAIN,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), 500
+
 # ---------- Webhook with Cache Invalidation and Rate Limiting ----------
 @app.route('/zendesk-webhook', methods=['POST'])
 def handle_zendesk_webhook():
@@ -538,6 +566,14 @@ def get_ticket_counts_cached(start_date: str, end_date: str) -> tuple:
     # If not in cache, fetch fresh data
     stats, status_code = get_ticket_counts_original(start_date, end_date)
 
+    if status_code != 200:
+        logger.error(f"Original ticket counts failed with status {status_code}")
+        # Return the error with appropriate status
+        if isinstance(stats, dict) and stats.get("error"):
+            return stats, f"api_error_{status_code}"
+        else:
+            return None, f"api_error_{status_code}"
+
     if stats and not isinstance(stats, dict) or (isinstance(stats, dict) and "error" not in stats):
         redis_cache.set_serialized(cache_key, stats, CACHE_TTL['dashboard_stats'])
         logger.info(f"Dashboard KPI cached with TTL {CACHE_TTL['dashboard_stats']} seconds")
@@ -546,7 +582,7 @@ def get_ticket_counts_cached(start_date: str, end_date: str) -> tuple:
 
 def get_ticket_counts_original(start_date: str, end_date: str):
     if not (BASE_DOMAIN and auth):
-        return {"error": "Zendesk not configured"}, 0
+        return {"error": "Zendesk not configured"}, 503
 
     headers = {'Content-Type': 'application/json'}
 
@@ -593,9 +629,12 @@ def get_ticket_counts_original(start_date: str, end_date: str):
         
         base_url = f"https://{BASE_DOMAIN}/api/v2/search.json"
         
-        resp = requests.get(base_url, headers=headers, params={'query': query}, auth=auth)
-        
+        resp = requests.get(base_url, headers=headers, params={'query': query}, auth=auth, timeout=30)
+
+        logger.info(f"Dashboard API call: {base_url} with query '{query}' returned status {resp.status_code}")
+
         if resp.status_code != 200:
+            logger.error(f"Dashboard API call failed: {resp.status_code} - {resp.text}")
             return total_stats, resp.status_code
 
         data = resp.json()
@@ -671,8 +710,12 @@ def dashboard():
 
     if isinstance(stats, dict) and stats.get("error"):
         error = stats["error"]
-    elif isinstance(stats, dict) and stats.get("status_code") != 200:
-        error = f"Zendesk API returned status {stats.get('status_code', 0)}"
+    elif stats is None:
+        error = "Failed to retrieve ticket statistics - Redis or API connection issue"
+        logger.error(f"Dashboard stats are None - potential Redis or API connection failure")
+    elif isinstance(stats, dict) and "total" not in stats:
+        error = "Invalid statistics data format"
+        logger.error(f"Dashboard stats missing 'total' field: {stats}")
     
     if stats:
         total_count = stats.get('total', 0)
@@ -763,8 +806,41 @@ def dashboard():
                            new_perc=new_perc,
                            on_hold_perc=on_hold_perc,
                            solved_perc=solved_perc,
+                           cache_status=cache_status,
                            zendesk_domain=BASE_DOMAIN,
-                           cache_buster=get_cache_buster())  # Add cache buster
+                           cache_buster=get_cache_buster())
+
+# ---------- Test route for Redis dashboard fix ----------
+@app.route('/test-dashboard')
+def test_dashboard():
+    """Test route for dashboard issues - remove in production"""
+    try:
+        # Test ticket counts
+        start_date = date.today().isoformat()
+        end_date = start_date
+
+        stats, api_status = get_ticket_counts_cached(start_date, end_date)
+
+        return jsonify({
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "test_range": f"{start_date} to {end_date}",
+            "stats_returned": stats is not None,
+            "stats_has_total": isinstance(stats, dict) and 'total' in stats if stats else False,
+            "api_status": api_status,
+            "redis_connected": redis_cache.is_connected(),
+            "sample_stats": {
+                "total": stats.get('total') if isinstance(stats, dict) else None,
+                "open": stats.get('open') if isinstance(stats, dict) else None,
+                "pending": stats.get('pending') if isinstance(stats, dict) else None,
+                "error": stats.get('error') if isinstance(stats, dict) and stats.get('error') else None,
+            }
+        })
+    except Exception as e:
+        logger.error(f"Dashboard test failed: {e}")
+        return jsonify({
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

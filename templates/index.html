@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Zendesk Ticket Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ cache_buster }}">
+    <script src="{{ url_for('static', filename='script.js') }}?v={{ cache_buster }}"></script>
 </head>
 <body>
     <!-- Auto-refresh indicator -->
@@ -19,94 +22,56 @@
             
         </div>
 
-        <!-- <div class="cards">
-            <div class="card">
-                <h3><span class="icon">🔗</span>API Endpoints</h3>
-                <div class="endpoint">
-                    <span class="method">POST</span> /zendesk-webhook
-                    <br><small>Receives webhook notifications from Zendesk</small>
+        <!-- recent ticket section -->
+        <div class="card tickets-card">
+            <h3><span class="icon">🎫</span>Recent 10 Tickets</h3>
+            {% if tickets_error %}
+                <div class="error-message">
+                    <p><strong>⚠️ Error loading tickets:</strong></p>
+                    <p>{{ tickets_error }}</p>
                 </div>
-                <div class="endpoint">
-                    <span class="method">GET</span> /
-                    <br><small>This dashboard page</small>
-                </div>
-            </div>
-
-            
-
-            <div class="card">
-                <h3><span class="icon">📊</span>Service Features</h3>
-                <ul>
-                    <li>✅ Real-time webhook processing</li>
-                    <li>✅ Zendesk API integration</li>
-                    <li>✅ Secure token authentication</li>
-                    <li>✅ Error handling & logging</li>
-                    <li>⏳ Database integration (planned)</li>
-                    <li>⏳ Ticket analytics (planned)</li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h3><span class="icon">🚀</span>Quick Start</h3>
-                <p><strong>Test the webhook endpoint:</strong></p>
-                <div class="endpoint">
-                    curl -X POST http://127.0.0.1:5000/zendesk-webhook \<br>
-                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
-                    &nbsp;&nbsp;-d '{"ticket":{"id":12345}}'
-                </div>
-
-            </div> -->
-
-            <div class="card tickets-card">
-                <h3><span class="icon">🎫</span>Recent Tickets</h3>
-                {% if tickets_error %}
-                    <div class="error-message">
-                        <p><strong>⚠️ Error loading tickets:</strong></p>
-                        <p>{{ tickets_error }}</p>
-                    </div>
-                {% elif recent_tickets %}
-                    <div class="tickets-list">
-                        {% for ticket in recent_tickets %}
-                        <div class="ticket-item">
-                            <div class="ticket-header">
-                                <div class="ticket-main-info">
-                                    <span class="ticket-id">#{{ ticket.id }}</span>
-                                    <a class="ticket-id" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank">></a>
-                                    <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
-                                    <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
-                                </div>
-                                <div class="ticket-dates">
-                                    <span class="ticket-date">Created: {{ ticket.created_at_formatted }}</span>
-                                    {% if ticket.updated_at_formatted %}
-                                    <span class="ticket-date">Updated: {{ ticket.updated_at_formatted }}</span>
-                                    {% endif %}
-                                </div>
+            {% elif recent_tickets %}
+                <div class="tickets-list">
+                    {% for ticket in recent_tickets %}
+                    <div class="ticket-item">
+                        <div class="ticket-header">
+                            <div class="ticket-main-info">
+                                <span class="ticket-id">#{{ ticket.id }}</span>
+                                <a class="ticket-id" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank">></a>
+                                <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
+                                <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
                             </div>
-                            <div class="ticket-subject">{{ ticket.subject_short }}</div>
-                            <div class="ticket-description">{{ ticket.description_short }}</div>
-                            <div class="ticket-people">
-                                <div class="ticket-person">
-                                    <span class="person-label">Requester:</span>
-                                    <span class="person-name">{{ ticket.requester_name }}</span>
-                                </div>
-                                <div class="ticket-person">
-                                    <span class="person-label">Assignee:</span>
-                                    <span class="person-name">{{ ticket.assignee_name }}</span>
-                                </div>
+                            <div class="ticket-dates">
+                                <span class="ticket-date">Created: {{ ticket.created_at_formatted }}</span>
+                                {% if ticket.updated_at_formatted %}
+                                <span class="ticket-date">Updated: {{ ticket.updated_at_formatted }}</span>
+                                {% endif %}
                             </div>
                         </div>
-                        {% endfor %}
+                        <div class="ticket-subject">{{ ticket.subject_short }}</div>
+                        <div class="ticket-description">{{ ticket.description_short }}</div>
+                        <div class="ticket-people">
+                            <div class="ticket-person">
+                                <span class="person-label">Requester:</span>
+                                <span class="person-name">{{ ticket.requester_name }}</span>
+                            </div>
+                            <div class="ticket-person">
+                                <span class="person-label">Assignee:</span>
+                                <span class="person-name">{{ ticket.assignee_name }}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="tickets-footer">
-                        <small>Showing {{ recent_tickets|length }} of the most recent tickets</small>
-                    </div>
-                {% else %}
-                    <div class="no-tickets">
-                        <p>🎉 No recent tickets found!</p>
-                        <p><small>This could mean no new tickets or configuration issues.</small></p>
-                    </div>
-                {% endif %}
-            </div>
+                    {% endfor %}
+                </div>
+                <div class="tickets-footer">
+                    <small>Showing {{ recent_tickets|length }} of the most recent tickets</small>
+                </div>
+            {% else %}
+                <div class="no-tickets">
+                    <p>🎉 No recent tickets found!</p>
+                    <p><small>This could mean no new tickets or configuration issues.</small></p>
+                </div>
+            {% endif %}
         </div>
 
         <div class="footer-card">

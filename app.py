@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import time
 from datetime import date, datetime, timezone, timedelta
 from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
@@ -12,15 +13,11 @@ app = Flask(__name__)
 
 
 def get_secret(secret_name):
-    # The path inside the container where Docker mounts secrets
     path = f"/run/secrets/{secret_name}"
     try:
-        # Use 'utf-8-sig' to handle the BOM (Byte Order Mark) that Windows
-        # sometimes adds to text files, which causes a UnicodeDecodeError.
         with open(path, encoding='utf-8') as f:
             return f.read().strip()
     except FileNotFoundError:
-        # Fallback to environment variable if secret file not found
         return os.getenv(secret_name)
 
 # Load secrets/environment variables
@@ -33,22 +30,24 @@ DB_USERNAME = get_secret("DB_USERNAME")
 DB_PASSWORD = get_secret("DB_PASSWORD")
 
 
-# Normalize base domain
-# Accept either "rockymountnchelp.zendesk.com" or full "https://rockymountnchelp.zendesk.com"
 def normalize_base_domain(subdomain_env: str) -> str:
     if not subdomain_env:
         return None
     s = subdomain_env.strip()
     if s.startswith("http://") or s.startswith("https://"):
         s = s.replace("http://", "").replace("https://", "")
-    return s  # e.g., rockymountnchelp.zendesk.com
+    return s
 
 BASE_DOMAIN = normalize_base_domain(SUBDOMAIN)
 
-# Set Zendesk API credentials
 auth = (f"{ZENDESK_USER}/token", ZENDESK_API_KEY) if ZENDESK_USER and ZENDESK_API_KEY else None
 
-# ---------- Existing index route (kept as-is with minor domain normalization) ----------
+# ---------- Cache buster helper ----------
+def get_cache_buster():
+    """Generate cache buster using current timestamp"""
+    return str(int(time.time()))
+
+# ---------- Existing index route with cache buster ----------
 @app.route('/')
 def index():
     zendesk_domain = BASE_DOMAIN if BASE_DOMAIN else 'Not configured'
@@ -73,7 +72,6 @@ def index():
                 tickets_data = response.json()
                 recent_tickets = tickets_data.get('tickets', [])[:10]
 
-                # Collect user IDs from tickets
                 user_ids = set()
                 for ticket in recent_tickets:
                     if ticket.get('requester_id'):
@@ -81,7 +79,6 @@ def index():
                     if ticket.get('assignee_id'):
                         user_ids.add(ticket['assignee_id'])
 
-                # Fetch user names
                 users_data = {}
                 if user_ids:
                     try:
@@ -94,11 +91,9 @@ def index():
                     except Exception as e:
                         print(f"Error fetching users: {e}")
 
-                # Format ticket fields
-                from datetime import datetime, timezone, timedelta
+                ny_timezone = timezone(timedelta(hours=-4))
                 for ticket in recent_tickets:
                     created_at = datetime.fromisoformat(ticket['created_at'].replace('Z', '+00:00'))
-                    ny_timezone = timezone(timedelta(hours=-4))
                     created_at_ny = created_at.astimezone(ny_timezone)
                     ticket['created_at_formatted'] = created_at_ny.strftime('%Y-%m-%d %H:%M:%S EST')
 
@@ -107,7 +102,6 @@ def index():
                         updated_at_ny = updated_at.astimezone(ny_timezone)
                         ticket['updated_at_formatted'] = updated_at_ny.strftime('%Y-%m-%d %H:%M:%S EST')
 
-                    # Truncate subject/description
                     subject = ticket.get('subject', 'No subject')
                     ticket['subject_short'] = subject[:80] + ('...' if len(subject) > 80 else '')
                     description = ticket.get('description', 'No description')
@@ -128,7 +122,8 @@ def index():
         api_key_status=api_key_status,
         config_status=config_status,
         recent_tickets=recent_tickets,
-        tickets_error=tickets_error
+        tickets_error=tickets_error,
+        cache_buster=get_cache_buster()  # Add cache buster
     )
 
 # ---------- Debug API ----------
@@ -177,9 +172,7 @@ def get_ticket_counts(start_date: str, end_date: str):
 
     headers = {'Content-Type': 'application/json'}
 
-    # Validate dates
     try:
-        # More robust date parsing
         sd = datetime.strptime(start_date, '%Y-%m-%d').date()
         ed = datetime.strptime(end_date, '%Y-%m-%d').date()
     except ValueError:
@@ -192,7 +185,6 @@ def get_ticket_counts(start_date: str, end_date: str):
         'open_tickets': [], 'pending_tickets': [], 'solved_tickets': [], 'new_tickets': [], 'on_hold_tickets': [],
     }
 
-    # Helper to accumulate stats for a page of results
     def accumulate_page_stats(page_data, stats_accumulator):
         for t in page_data.get('results', []):
             stats_accumulator['total'] += 1
@@ -213,7 +205,6 @@ def get_ticket_counts(start_date: str, end_date: str):
 
     current_start = sd
     while current_start <= ed:
-        # Chunk date range into 60-day intervals to avoid API errors
         current_end = current_start + timedelta(days=59)
         if current_end > ed:
             current_end = ed
@@ -245,7 +236,7 @@ def get_ticket_counts(start_date: str, end_date: str):
 
     return total_stats, 200
 
-# ---------- Dashboard route at /dashboard ----------
+# ---------- Dashboard route with cache buster ----------
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     stats = None
@@ -271,7 +262,6 @@ def dashboard():
         start_date = default_start
         end_date = default_end
 
-    # Always load KPIs with current date range (whether GET or POST)
     stats, status_code = get_ticket_counts(start_date, end_date)
     if isinstance(stats, dict) and stats.get("error"):
         error = stats["error"]
@@ -294,16 +284,13 @@ def dashboard():
         new_tickets = stats.get('new_tickets', [])
         on_hold_tickets = stats.get('on_hold_tickets', [])
 
-        # Sort tickets by creation date in descending order
         open_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         pending_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         solved_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         new_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         on_hold_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         
-        # Combine tickets to fetch user data in one go
         all_tickets = open_tickets + pending_tickets + solved_tickets + new_tickets + on_hold_tickets      
-        
         
         if all_tickets and BASE_DOMAIN and auth:
             user_ids = set()
@@ -332,7 +319,6 @@ def dashboard():
                     except Exception as e:
                         print(f"Error fetching users for dashboard: {e}")
 
-            # Format ticket fields for display
             ny_timezone = timezone(timedelta(hours=-4))
             for ticket in all_tickets:
                 if ticket.get('created_at'):
@@ -346,7 +332,6 @@ def dashboard():
                     ticket['updated_at_formatted'] = updated_at.astimezone(ny_timezone).strftime('%Y-%m-%d %H:%M:%S EST')
                 else:
                     ticket['updated_at_formatted'] = 'N/A'
-
 
                 subject = ticket.get('subject', 'No subject')
                 ticket['subject_short'] = subject[:80] + ('...' if len(subject) > 80 else '')
@@ -368,13 +353,12 @@ def dashboard():
                            on_hold_tickets=on_hold_tickets,
                            open_perc=open_perc,
                            pending_perc=pending_perc,
-                           closed_perc = closed_perc,
+                           closed_perc=closed_perc,
                            new_perc=new_perc,
                            on_hold_perc=on_hold_perc,
                            solved_perc=solved_perc,
-                           zendesk_domain=BASE_DOMAIN)
+                           zendesk_domain=BASE_DOMAIN,
+                           cache_buster=get_cache_buster())  # Add cache buster
 
 if __name__ == '__main__':
-    # app.run(debug=True)
     app.run(host='0.0.0.0', port=5000)
-

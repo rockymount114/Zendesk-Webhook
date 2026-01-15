@@ -10,6 +10,143 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
+        /* Service Status Indicators */
+        .service-status {
+            margin-top: 15px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 0.85em;
+        }
+
+        .service-status .status {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .service-status .redis-status {
+            background: rgba(255, 193, 7, 0.1);
+            border-color: rgba(255, 193, 7, 0.3);
+            color: #d39e00;
+        }
+
+        .service-status .redis-status:active {
+            background: rgba(255, 193, 7, 0.2);
+        }
+
+        .service-status .cache-status {
+            background: rgba(0, 123, 255, 0.1);
+            border-color: rgba(0, 123, 255, 0.3);
+            color: #0056b3;
+        }
+
+        /* Comments Styling */
+        .ticket-comments {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .comments-loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .comments-header h4 {
+            margin: 0 0 15px 0;
+            color: #343a40;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .comments-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .comment-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .comment-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        .comment-author {
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .comment-date {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .comment-date:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .comment-body {
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: #495057;
+        }
+
+        .comments-footer {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            font-size: 0.8em;
+        }
+
+        .no-comments, .comments-error {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .comments-error {
+            color: #dc3545;
+        }
+
+        .service-status .cache-status:active {
+            background: rgba(0, 123, 255, 0.2);
+        }
         .container {
             max-width: 1280px;
             margin: 0 auto;

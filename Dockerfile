@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir uv
 
 # Copy only dependency files for caching
 COPY pyproject.toml .
-RUN uv pip install --system --no-cache gunicorn>=20.1.0 waitress>=2.1.0 flask>=2.0.0 requests>=2.25.0 python-dotenv>=0.19.0
+RUN uv pip install --system --no-cache gunicorn>=20.1.0 waitress>=2.1.0 flask>=2.0.0 requests>=2.25.0 python-dotenv>=0.19.0 redis>=4.5.0
 
 # Copy application source code
 COPY . .

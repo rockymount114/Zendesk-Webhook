@@ -1,6 +1,20 @@
+version: '3.8'
+
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - app-network
+    restart: unless-stopped
+
   zendesk-dashboard:
-    image: zjxteusa/zendesk-dashboard:latest
+    build: .
     container_name: zendesk-dashboard
     ports:
       - "5000:5000"
@@ -12,4 +26,19 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    depends_on:
+      - redis
+    networks:
+      - app-network
     restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

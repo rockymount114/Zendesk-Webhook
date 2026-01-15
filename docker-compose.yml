@@ -11,5 +11,5 @@ services:
       - DB_SERVER=${DB_SERVER}
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD
+      - DB_PASSWORD=${DB_PASSWORD}
     restart: unless-stopped

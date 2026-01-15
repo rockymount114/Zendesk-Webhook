@@ -244,6 +244,15 @@ docker image prune -a
 docker volume prune
 ```
 
+always run as
+
+```bash
+docker compose -f docker-compose.prod.yml down -v
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml logs -f zendesk-dashboard
+
+```
+
 Summary of Production Improvements
 🎯 Critical Enhancements:
 

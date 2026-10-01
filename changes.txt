@@ -51,3 +51,9 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
      for ODBC SQL Server driver compatibility.
    - Updated `docker-compose.yml` image name to `zjxteusa/zendesk-webhook:latest`.
    - Updated `README.md` with instructions on GitHub Secrets (`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`).
+7. CI Test Environment Isolation:
+   - Added tests/conftest.py to ensure unit tests run in headless CI environments
+     without relying on local .env files.
+   - Added explicit test environment variables to the Run pytest step in GitHub Actions.
+   - Added unit tests for unconfigured comments route and dashboard route in tests/test_app.py.
+   - All 22 tests passing both with and without .env.

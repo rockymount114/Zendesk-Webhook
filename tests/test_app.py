@@ -114,3 +114,34 @@ class TestAppRoutes:
         data = response.get_json()
         assert "comments" in data
         assert data["comments"][0]["body"] == "First comment"
+
+    def test_comments_route_unconfigured(self, monkeypatch, client):
+        import app
+        monkeypatch.setattr(app, "BASE_DOMAIN", None)
+        monkeypatch.setattr(app, "auth", None)
+        response = client.get("/tickets/4021/comments")
+        assert response.status_code == 500
+        assert response.get_json()["error"] == "Zendesk not configured"
+
+    @patch("app.get_ticket_counts")
+    def test_dashboard_route(self, mock_counts, client):
+        mock_counts.return_value = (
+            {
+                "total": 1,
+                "open": 1,
+                "pending": 0,
+                "closed": 0,
+                "new": 0,
+                "on-hold": 0,
+                "solved": 0,
+                "open_tickets": [],
+                "pending_tickets": [],
+                "solved_tickets": [],
+                "new_tickets": [],
+                "on_hold_tickets": [],
+            },
+            200,
+        )
+        response = client.get("/dashboard")
+        assert response.status_code == 200
+        assert b"Zendesk KPIs" in response.data

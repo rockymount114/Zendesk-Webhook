@@ -1,4 +1,4 @@
-// open_tickets.js - Client-side filtering, sorting, CSV export, and auto-refresh
+// open_tickets.js - Client-side pagination, real-time filtering, sorting, CSV export, and auto-refresh
 
 document.addEventListener('DOMContentLoaded', function () {
     const filterId = document.getElementById('filter-id');
@@ -13,13 +13,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnRefresh = document.getElementById('btn-refresh');
     const autoRefreshToggle = document.getElementById('toggle-auto-refresh');
     const refreshCountdown = document.getElementById('refresh-countdown');
-    const ticketCounter = document.getElementById('ticket-counter');
+    const selectPageSize = document.getElementById('select-page-size');
+    const paginationInfoText = document.getElementById('pagination-info-text');
+    const paginationControls = document.getElementById('pagination-controls');
     const tableBody = document.getElementById('tickets-tbody');
     const noResultsRow = document.getElementById('no-results-row');
     const sortHeaders = document.querySelectorAll('th.sortable');
+    const tableContainer = document.getElementById('table-container');
 
-    let currentSortColumn = 'created_at';
+    let currentSortColumn = 'date';
     let currentSortAsc = false; // default newest first
+    let currentPage = 1;
+    let pageSize = 25;
+    let matchingRows = [];
 
     // ----------------- Filtering -----------------
     function applyFilters() {
@@ -31,11 +37,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const startDateVal = (filterStartDate ? filterStartDate.value : '');
         const endDateVal = (filterEndDate ? filterEndDate.value : '');
 
-        const rows = tableBody.querySelectorAll('tr.ticket-row');
-        let visibleCount = 0;
-        const totalCount = rows.length;
+        const allRows = Array.from(tableBody.querySelectorAll('tr.ticket-row'));
+        matchingRows = [];
 
-        rows.forEach(row => {
+        allRows.forEach(row => {
             const rowId = (row.dataset.id || '').toLowerCase();
             const rowSubject = (row.dataset.subject || '').toLowerCase();
             const rowStatus = (row.dataset.status || '').toLowerCase();
@@ -54,22 +59,142 @@ document.addEventListener('DOMContentLoaded', function () {
             if (match && endDateVal && rowDate > endDateVal) match = false;
 
             if (match) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+                matchingRows.push(row);
             }
         });
 
-        // Update counter
-        if (ticketCounter) {
-            ticketCounter.textContent = `Showing ${visibleCount} of ${totalCount} tickets`;
+        currentPage = 1;
+        renderPagination();
+    }
+
+    // ----------------- Pagination -----------------
+    function renderPagination() {
+        const total = matchingRows.length;
+        const allRows = tableBody.querySelectorAll('tr.ticket-row');
+
+        // Hide all rows initially
+        allRows.forEach(r => r.style.display = 'none');
+
+        // Empty state row
+        if (noResultsRow) {
+            noResultsRow.style.display = (total === 0 && allRows.length > 0) ? '' : 'none';
         }
 
-        // Show/hide empty state row
-        if (noResultsRow) {
-            noResultsRow.style.display = (visibleCount === 0 && totalCount > 0) ? '' : 'none';
+        let totalPages = 1;
+        let startIndex = 0;
+        let endIndex = total;
+
+        if (pageSize === 'all') {
+            totalPages = 1;
+            startIndex = 0;
+            endIndex = total;
+            matchingRows.forEach(r => r.style.display = '');
+        } else {
+            totalPages = Math.ceil(total / pageSize) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            startIndex = (currentPage - 1) * pageSize;
+            endIndex = Math.min(startIndex + pageSize, total);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                if (matchingRows[i]) {
+                    matchingRows[i].style.display = '';
+                }
+            }
         }
+
+        // Update info text
+        if (paginationInfoText) {
+            if (total === 0) {
+                paginationInfoText.textContent = 'Showing 0 tickets';
+            } else if (pageSize === 'all' || total <= pageSize) {
+                paginationInfoText.textContent = `Showing all ${total} tickets`;
+            } else {
+                paginationInfoText.textContent = `Showing ${startIndex + 1}–${endIndex} of ${total} tickets (Page ${currentPage} of ${totalPages})`;
+            }
+        }
+
+        // Render page buttons
+        renderPaginationButtons(totalPages);
+    }
+
+    function renderPaginationButtons(totalPages) {
+        if (!paginationControls) return;
+        paginationControls.innerHTML = '';
+
+        if (totalPages <= 1 || pageSize === 'all') {
+            return;
+        }
+
+        // Helper to create button
+        function createBtn(text, pageNum, disabled = false, active = false) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `page-btn ${active ? 'active' : ''}`;
+            btn.innerHTML = text;
+            btn.disabled = disabled;
+            if (!disabled && !active) {
+                btn.addEventListener('click', function () {
+                    currentPage = pageNum;
+                    renderPagination();
+                    if (tableContainer) {
+                        tableContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+            }
+            return btn;
+        }
+
+        function createEllipsis() {
+            const span = document.createElement('span');
+            span.className = 'page-ellipsis';
+            span.textContent = '...';
+            return span;
+        }
+
+        // First button
+        paginationControls.appendChild(createBtn('«', 1, currentPage === 1));
+        // Prev button
+        paginationControls.appendChild(createBtn('‹', currentPage - 1, currentPage === 1));
+
+        // Window of page numbers around current
+        const delta = 2;
+        const start = Math.max(1, currentPage - delta);
+        const end = Math.min(totalPages, currentPage + delta);
+
+        if (start > 1) {
+            paginationControls.appendChild(createBtn('1', 1, false, currentPage === 1));
+            if (start > 2) {
+                paginationControls.appendChild(createEllipsis());
+            }
+        }
+
+        for (let i = start; i <= end; i++) {
+            paginationControls.appendChild(createBtn(i.toString(), i, false, i === currentPage));
+        }
+
+        if (end < totalPages) {
+            if (end < totalPages - 1) {
+                paginationControls.appendChild(createEllipsis());
+            }
+            paginationControls.appendChild(createBtn(totalPages.toString(), totalPages, false, totalPages === currentPage));
+        }
+
+        // Next button
+        paginationControls.appendChild(createBtn('›', currentPage + 1, currentPage === totalPages));
+        // Last button
+        paginationControls.appendChild(createBtn('»', totalPages, currentPage === totalPages));
+    }
+
+    // Page size dropdown listener
+    if (selectPageSize) {
+        selectPageSize.addEventListener('change', function () {
+            const val = this.value;
+            pageSize = (val === 'all') ? 'all' : parseInt(val, 10);
+            currentPage = 1;
+            renderPagination();
+        });
     }
 
     // Attach filter event listeners
@@ -124,6 +249,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return 0;
         });
 
+        // Re-append in sorted order
         rows.forEach(r => tableBody.appendChild(r));
 
         // Update header indicators
@@ -137,6 +263,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 th.classList.remove('active-sort');
             }
         });
+
+        // Re-apply filters to update matchingRows order and pagination slice
+        applyFilters();
     }
 
     sortHeaders.forEach(th => {
@@ -160,16 +289,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (btnExport) {
         btnExport.addEventListener('click', function () {
-            const rows = Array.from(tableBody.querySelectorAll('tr.ticket-row')).filter(r => r.style.display !== 'none');
-            if (rows.length === 0) {
-                alert('No visible tickets to export.');
+            // Export all matching filtered rows across all pages
+            if (matchingRows.length === 0) {
+                alert('No matching tickets to export.');
                 return;
             }
 
             const headers = ['Ticket ID', 'Subject', 'Requester', 'Assignee', 'Status', 'Priority', 'Created Date (EST)', 'Updated Date (EST)', 'Zendesk URL'];
             const csvRows = [headers.join(',')];
 
-            rows.forEach(r => {
+            matchingRows.forEach(r => {
                 const id = r.dataset.id || '';
                 const subject = r.dataset.subject || '';
                 const requester = r.dataset.requester || '';
@@ -207,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ----------------- Refresh & Auto-Refresh -----------------
+    // ----------------- Refresh & Auto-Refresh (Default: False) -----------------
     let countdown = 60;
     let timer = null;
 
@@ -246,6 +375,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (autoRefreshToggle) {
+        autoRefreshToggle.checked = false; // Default: False
+        if (refreshCountdown) refreshCountdown.textContent = 'Off';
+
         autoRefreshToggle.addEventListener('change', function () {
             if (this.checked) {
                 startAutoRefresh();
@@ -253,13 +385,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 stopAutoRefresh();
             }
         });
-
-        // Start if checked by default
-        if (autoRefreshToggle.checked) {
-            startAutoRefresh();
-        }
     }
 
-    // Initial filter pass
+    // Initial filter & pagination pass
     applyFilters();
 });

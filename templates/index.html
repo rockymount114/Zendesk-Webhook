@@ -12,7 +12,11 @@
 </head>
 <body>
     <!-- Auto-refresh indicator -->
-    <div id="refresh-indicator" class="refresh-indicator">Auto-refresh in 60s</div>
+    <div id="refresh-indicator" class="refresh-indicator">
+        <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin: 0; user-select: none;">
+            <input type="checkbox" id="toggle-index-refresh"> Auto-refresh: <strong id="refresh-timer-label">Off</strong>
+        </label>
+    </div>
     
     <div class="container">
         <!-- Top Navigation -->

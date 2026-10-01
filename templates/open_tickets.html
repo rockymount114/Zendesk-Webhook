@@ -31,91 +31,52 @@
         </div>
         {% endif %}
 
-        <!-- Filter Card -->
-        <div class="filter-card">
-            <div class="filter-header">
-                <h3><span>🔍</span> Filter & Search Tickets</h3>
-                <div class="filter-controls-right">
-                    <span id="ticket-counter" class="badge-counter">Showing {{ tickets|length }} of {{ tickets|length }} tickets</span>
+        <!-- Single-Line Filter Toolbar -->
+        <div class="filter-toolbar">
+            <div class="filter-inputs-row">
+                <span class="filter-icon" title="Filter Tickets">🔍</span>
+                <input type="text" id="filter-id" class="filter-input-inline filter-id-input" placeholder="ID...">
+                <input type="text" id="filter-subject" class="filter-input-inline filter-subject-input" placeholder="Subject keyword...">
+                <select id="filter-status" class="filter-input-inline filter-status-select">
+                    <option value="all">All Statuses</option>
+                    <option value="new">New</option>
+                    <option value="open">Open</option>
+                    <option value="pending">Pending</option>
+                    <option value="on-hold">On-Hold</option>
+                    <option value="hold">Hold</option>
+                </select>
+                <input type="text" id="filter-requester" class="filter-input-inline filter-user-input" list="requester-datalist" placeholder="Requester...">
+                <datalist id="requester-datalist">
+                    {% for req in requesters %}
+                    <option value="{{ req }}">
+                    {% endfor %}
+                </datalist>
+                <input type="text" id="filter-assignee" class="filter-input-inline filter-user-input" list="assignee-datalist" placeholder="Assignee...">
+                <datalist id="assignee-datalist">
+                    {% for ass in assignees %}
+                    <option value="{{ ass }}">
+                    {% endfor %}
+                </datalist>
+                <div class="filter-date-group">
+                    <input type="date" id="filter-start-date" class="filter-input-inline filter-date-input" title="Created From">
+                    <span class="date-sep">–</span>
+                    <input type="date" id="filter-end-date" class="filter-input-inline filter-date-input" title="Created To">
                 </div>
             </div>
 
-            <div class="filter-grid">
-                <!-- Ticket ID -->
-                <div class="filter-group">
-                    <label for="filter-id">Ticket ID</label>
-                    <input type="text" id="filter-id" class="filter-input" placeholder="e.g. 4021">
-                </div>
-
-                <!-- Subject -->
-                <div class="filter-group">
-                    <label for="filter-subject">Subject</label>
-                    <input type="text" id="filter-subject" class="filter-input" placeholder="Search in subject...">
-                </div>
-
-                <!-- Status Filter -->
-                <div class="filter-group">
-                    <label for="filter-status">Status</label>
-                    <select id="filter-status" class="filter-input">
-                        <option value="all">All Active Statuses</option>
-                        <option value="new">New</option>
-                        <option value="open">Open</option>
-                        <option value="pending">Pending</option>
-                        <option value="on-hold">On-Hold</option>
-                        <option value="hold">Hold</option>
-                    </select>
-                </div>
-
-                <!-- Requester -->
-                <div class="filter-group">
-                    <label for="filter-requester">Requester</label>
-                    <input type="text" id="filter-requester" class="filter-input" list="requester-datalist" placeholder="Select or type requester...">
-                    <datalist id="requester-datalist">
-                        {% for req in requesters %}
-                        <option value="{{ req }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-
-                <!-- Assignee -->
-                <div class="filter-group">
-                    <label for="filter-assignee">Assignee</label>
-                    <input type="text" id="filter-assignee" class="filter-input" list="assignee-datalist" placeholder="Select or type assignee...">
-                    <datalist id="assignee-datalist">
-                        {% for ass in assignees %}
-                        <option value="{{ ass }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
-
-                <!-- Created Date Range -->
-                <div class="filter-group">
-                    <label for="filter-start-date">Created From</label>
-                    <input type="date" id="filter-start-date" class="filter-input">
-                </div>
-                <div class="filter-group">
-                    <label for="filter-end-date">Created To</label>
-                    <input type="date" id="filter-end-date" class="filter-input">
-                </div>
-            </div>
-
-            <div class="filter-actions">
-                <div class="filter-buttons-left">
-                    <button type="button" id="btn-clear-filters" class="btn btn-secondary">🔄 Clear Filters</button>
-                    <button type="button" id="btn-export-csv" class="btn btn-primary">📥 Export CSV</button>
-                </div>
-                <div class="filter-buttons-right">
-                    <button type="button" id="btn-refresh" class="btn btn-secondary">⚡ Refresh Now</button>
-                    <label class="auto-refresh-toggle">
-                        <input type="checkbox" id="toggle-auto-refresh" checked>
-                        Auto-refresh: <strong id="refresh-countdown">60s</strong>
-                    </label>
-                </div>
+            <div class="filter-actions-row">
+                <button type="button" id="btn-clear-filters" class="btn btn-secondary btn-sm" title="Clear all filters">Clear</button>
+                <button type="button" id="btn-export-csv" class="btn btn-primary btn-sm" title="Export filtered tickets to CSV">📥 CSV</button>
+                <button type="button" id="btn-refresh" class="btn btn-secondary btn-sm" title="Refresh from Zendesk">⚡ Refresh</button>
+                <label class="auto-refresh-toggle-sm" title="Auto-refresh every 60 seconds">
+                    <input type="checkbox" id="toggle-auto-refresh">
+                    <span>Auto: <strong id="refresh-countdown">Off</strong></span>
+                </label>
             </div>
         </div>
 
         <!-- Tickets Table -->
-        <div class="table-responsive">
+        <div class="table-responsive" id="table-container">
             <table class="tickets-table">
                 <thead>
                     <tr>
@@ -179,6 +140,26 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="pagination-bar">
+            <div class="pagination-info">
+                <span id="ticket-counter"><span id="pagination-info-text">Showing 0 of 0 tickets</span></span>
+                <label class="page-size-selector">
+                    Show
+                    <select id="select-page-size" class="filter-input-sm">
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="all">All</option>
+                    </select>
+                    per page
+                </label>
+            </div>
+            <div class="pagination-controls" id="pagination-controls">
+                <!-- Dynamically populated by open_tickets.js -->
+            </div>
         </div>
 
         <div class="footer-card">

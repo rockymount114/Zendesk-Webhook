@@ -15,8 +15,10 @@ This application provides comprehensive Zendesk integration with:
 
 - **Real-time Dashboard**: Interactive web interface with live ticket display in Apple-inspired design
 - **KPI Metrics**: Dashboard view showing counts and distribution percentages for open, pending, solved, new, and on-hold tickets
-- **Auto-Refresh**: Dashboard automatically updates every 60 seconds with smart tab handling
-- **Enhanced Ticket Display**: Shows 10 most recent tickets with comprehensive details in full-width layout
+- **Full-Screen Responsive Layout**: Auto-adapting fluid full-width design across all screen sizes
+- **Client-Side Pagination**: Clean page-by-page ticket navigation (25, 50, 100, All) with sliding page controls
+- **Single-Line Filter Toolbar**: Compact, unified horizontal search & action bar
+- **Configurable Auto-Refresh**: Auto-refresh defaults to off with user-controllable toggles and live countdowns
 - **Timezone Support**: All timestamps displayed in EST (UTC-4) for New York timezone
 - **Rich Ticket Information**: Displays requester, assignee, description, priority, and status
 - **Apple-Style Design**: Modern glassmorphism UI with backdrop blur effects and smooth animations
@@ -159,14 +161,15 @@ The application will start on `http://localhost:5000`
 #### Recent Tickets Dashboard
 - **URL**: `http://localhost:5000/`
 - **Features**:
-  - Real-time display of 10 most recent tickets
-  - Auto-refresh every 60 seconds with live countdown
+  - Real-time display of 10 most recent tickets in full-width responsive layout
+  - Opt-in auto-refresh (defaults to Off) with toggleable 60-second live countdown
   - Color-coded status badges and priority tags
   - Ticket details: ID, status, subject, description preview, requester, assignee, timestamps
 
 #### KPI Dashboard
 - **URL**: `http://localhost:5000/dashboard`
 - **Features**:
+  - Full-screen responsive KPI dashboard auto-adapting to any display resolution
   - Ticket count cards: Total, Open, Pending, Solved, New, On-Hold
   - Percentage distribution breakdown
   - Date range filtering
@@ -175,20 +178,21 @@ The application will start on `http://localhost:5000`
 #### All Open Tickets Monitor
 - **URL**: `http://localhost:5000/open-tickets`
 - **Features**:
-  - Comprehensive monitor of all active/unsolved tickets (`new`, `open`, `pending`, `on-hold`)
-  - Real-time client-side instant filtering across:
+  - Comprehensive full-screen monitor of all active/unsolved tickets (`new`, `open`, `pending`, `on-hold`)
+  - Client-side pagination with selectable page sizes (25 default, 50, 100, All) and page buttons
+  - Single-line horizontal filter toolbar containing:
     - **Ticket ID**: Numeric or partial text match
     - **Subject**: Substring keyword search
     - **Status**: Status filter dropdown
     - **Requester**: Autocomplete datalist + text search
     - **Assignee**: Autocomplete datalist + text search
     - **Created Date Range**: Start date & end date pickers
-  - Live ticket counter badge (*"Showing X of Y tickets"*)
+  - Record range indicator (*"Showing X–Y of Z tickets"*)
   - Clickable column sorting by clicking table headers (ascending/descending toggle)
   - One-click "Clear Filters" button
   - "Export CSV" button to download current filtered results
   - Direct clickable links to tickets in Zendesk (`/agent/tickets/{id}`)
-  - Manual "Refresh Now" button and toggleable 60-second auto-refresh timer
+  - Manual "Refresh" button and opt-in auto-refresh (defaults to Off) with countdown timer
 
 #### Debug Endpoint
 - **URL**: `http://localhost:5000/debug-api`

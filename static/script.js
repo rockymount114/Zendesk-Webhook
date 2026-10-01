@@ -1,18 +1,18 @@
-// Auto-refresh functionality
-let refreshInterval;
-let countdownInterval;
+// Auto-refresh functionality for Recent Tickets (Default: False)
+let refreshInterval = null;
+let countdownInterval = null;
 let secondsLeft = 60;
+let isAutoRefreshEnabled = false;
 
 function updateCountdown() {
-    const indicator = document.getElementById('refresh-indicator');
-    if (indicator) {
-        indicator.textContent = `Auto-refresh in ${secondsLeft}s`;
+    const label = document.getElementById('refresh-timer-label');
+    if (label && isAutoRefreshEnabled) {
+        label.textContent = `${secondsLeft}s`;
         secondsLeft--;
-        
+
         if (secondsLeft < 0) {
-            indicator.textContent = 'Refreshing...';
+            label.textContent = 'Refreshing...';
             setTimeout(() => {
-                // Force a hard reload to bypass cache
                 window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
             }, 500);
         }
@@ -20,42 +20,57 @@ function updateCountdown() {
 }
 
 function startAutoRefresh() {
-    // Update countdown every second
+    isAutoRefreshEnabled = true;
+    secondsLeft = 60;
+    if (countdownInterval) clearInterval(countdownInterval);
+    if (refreshInterval) clearInterval(refreshInterval);
+
+    updateCountdown();
     countdownInterval = setInterval(updateCountdown, 1000);
-    
-    // Refresh page every 60 seconds
     refreshInterval = setInterval(() => {
-        // Force a hard reload to bypass cache
         window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
     }, 60000);
+
+    const label = document.getElementById('refresh-timer-label');
+    if (label) label.textContent = '60s';
 }
 
 function stopAutoRefresh() {
+    isAutoRefreshEnabled = false;
     if (refreshInterval) clearInterval(refreshInterval);
     if (countdownInterval) clearInterval(countdownInterval);
+    refreshInterval = null;
+    countdownInterval = null;
+
+    const label = document.getElementById('refresh-timer-label');
+    if (label) label.textContent = 'Off';
 }
 
-// Start auto-refresh when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Ensure CSS is fully loaded before showing content
-    if (document.styleSheets.length === 0) {
-        console.warn('CSS not loaded, forcing reload...');
-        setTimeout(() => {
-            window.location.reload(true);
-        }, 1000);
-        return;
+document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('toggle-index-refresh');
+    if (toggle) {
+        toggle.checked = false; // Default: False
+        toggle.addEventListener('change', function () {
+            if (this.checked) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        });
     }
-    
-    startAutoRefresh();
-    updateCountdown(); // Initial countdown display
+
+    // Default indicator text
+    const label = document.getElementById('refresh-timer-label');
+    if (label) label.textContent = 'Off';
 });
 
-// Stop auto-refresh when page is hidden (user switches tabs)
-document.addEventListener('visibilitychange', function() {
+// Pause when page is hidden (if enabled)
+document.addEventListener('visibilitychange', function () {
+    if (!isAutoRefreshEnabled) return;
     if (document.hidden) {
-        stopAutoRefresh();
+        if (countdownInterval) clearInterval(countdownInterval);
+        if (refreshInterval) clearInterval(refreshInterval);
     } else {
-        secondsLeft = 60; // Reset countdown
         startAutoRefresh();
     }
 });
@@ -65,18 +80,3 @@ function manualRefresh() {
     stopAutoRefresh();
     window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
 }
-
-// Monitor if CSS fails to load and auto-retry
-window.addEventListener('load', function() {
-    const testElement = document.querySelector('.container');
-    if (testElement) {
-        const styles = window.getComputedStyle(testElement);
-        // Check if CSS is actually applied (max-width should be 1280px)
-        if (styles.maxWidth === 'none' || styles.maxWidth === '') {
-            console.warn('CSS not properly applied, reloading...');
-            setTimeout(() => {
-                window.location.reload(true);
-            }, 500);
-        }
-    }
-});

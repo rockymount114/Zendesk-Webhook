@@ -24,6 +24,8 @@ services:
     
     # Use Docker secrets for sensitive data
     secrets:
+      - ZENDESK_CLIENT_ID
+      - ZENDESK_AUTH_SECRET
       - ZENDESK_USER
       - ZENDESK_API_KEY
       - SUBDOMAIN
@@ -65,6 +67,10 @@ services:
 
 # Define secrets (point to your secret files)
 secrets:
+  ZENDESK_CLIENT_ID:
+    file: ./secrets/ZENDESK_CLIENT_ID
+  ZENDESK_AUTH_SECRET:
+    file: ./secrets/ZENDESK_AUTH_SECRET
   ZENDESK_USER:
     file: ./secrets/ZENDESK_USER
   ZENDESK_API_KEY:

@@ -1,0 +1,44 @@
+Summary of Changes: Migration to Zendesk OAuth2 Authentication
+==================================================================
+
+1. OAuth2 Authentication Implementation:
+   - Created `zendesk_auth.py` providing:
+     * `ZendeskOAuthTokenManager`: Thread-safe OAuth2 token manager supporting Zendesk's
+       Client Credentials grant flow (`POST /oauth/tokens`). Caches access tokens with
+       pre-emptive refresh 60 seconds before expiration.
+     * `ZendeskAuth`: Custom `requests.auth.AuthBase` handler that injects
+       `Authorization: Bearer <token>` into outgoing requests. Automatically handles
+       HTTP 401 responses by force-refreshing the token and retrying the request once.
+       Maintains backward compatibility with legacy Basic Auth (`user/token` + API token).
+     * `clean_secret`: Strips whitespace and surrounding single or double quotes.
+     * `normalize_base_domain`: Normalizes domain inputs (stripping schemes and trailing slashes).
+
+2. Application Updates (`app.py`):
+   - Added loading of `ZENDESK_CLIENT_ID`, `ZENDESK_AUTH_SECRET` (with alias `ZENDESK_CLIENT_SECRET`),
+     and optional `ZENDESK_OAUTH_SCOPE` (defaulting to "read").
+   - Integrated `ZendeskOAuthTokenManager` and `ZendeskAuth` into `app.py`.
+   - Updated index route (`/`) to recognize OAuth2 configuration and mark status as Ready.
+   - Updated `/debug-api` route to report OAuth status, auth mode (`OAuth2`), client ID, and
+     `Bearer ***` auth header representation.
+   - Added `/tickets/<int:ticket_id>/comments` and `/api/tickets/<int:ticket_id>/comments` endpoints.
+   - Added `main()` entrypoint function.
+
+3. Deployment and Configuration Updates:
+   - `.env.example`: Added documentation and placeholders for `ZENDESK_CLIENT_ID` and `ZENDESK_AUTH_SECRET`.
+   - `docker-compose.yml`: Added `ZENDESK_CLIENT_ID` and `ZENDESK_AUTH_SECRET` to environment variables.
+   - `docker-compose.prod.yml`: Added `ZENDESK_CLIENT_ID` and `ZENDESK_AUTH_SECRET` to the service secrets
+     and defined file sources in `./secrets/`.
+   - Created `secrets/ZENDESK_CLIENT_ID` and `secrets/ZENDESK_AUTH_SECRET`.
+
+4. Test Suite:
+   - Added `tests/test_zendesk_auth.py` covering token acquisition, caching, thread safety,
+     error handling, and 401 retry recovery.
+   - Added `tests/test_app.py` covering Flask routes (`/`, `/debug-api`, `/zendesk-webhook`,
+     `/tickets/<id>/comments`).
+   - All 20 tests executed and passing.
+   - Live integration tested against Zendesk API with successful HTTP 200 response.
+
+5. Documentation Updates (`README.md`):
+   - Updated documentation to describe Zendesk OAuth2 setup, client credentials flow,
+     new endpoints (`/tickets/<id>/comments`, `/dashboard`), automated testing with pytest,
+     and Docker secrets configuration for OAuth.

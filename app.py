@@ -12,13 +12,17 @@ load_dotenv()
 app = Flask(__name__)
 
 
+from zendesk_auth import clean_secret, normalize_base_domain, ZendeskOAuthTokenManager, ZendeskAuth
+
 def get_secret(secret_name):
     path = f"/run/secrets/{secret_name}"
+    val = None
     try:
         with open(path, encoding='utf-8') as f:
-            return f.read().strip()
+            val = f.read()
     except FileNotFoundError:
-        return os.getenv(secret_name)
+        val = os.getenv(secret_name)
+    return clean_secret(val)
 
 # Load secrets/environment variables
 ZENDESK_USER = get_secret("ZENDESK_USER")
@@ -29,18 +33,25 @@ DB_DATABASE = get_secret("DB_DATABASE")
 DB_USERNAME = get_secret("DB_USERNAME")
 DB_PASSWORD = get_secret("DB_PASSWORD")
 
-
-def normalize_base_domain(subdomain_env: str) -> str:
-    if not subdomain_env:
-        return None
-    s = subdomain_env.strip()
-    if s.startswith("http://") or s.startswith("https://"):
-        s = s.replace("http://", "").replace("https://", "")
-    return s
+# Zendesk OAuth2 configuration
+ZENDESK_CLIENT_ID = get_secret("ZENDESK_CLIENT_ID")
+ZENDESK_AUTH_SECRET = get_secret("ZENDESK_AUTH_SECRET") or get_secret("ZENDESK_CLIENT_SECRET")
+ZENDESK_OAUTH_SCOPE = get_secret("ZENDESK_OAUTH_SCOPE") or "read"
 
 BASE_DOMAIN = normalize_base_domain(SUBDOMAIN)
 
-auth = (f"{ZENDESK_USER}/token", ZENDESK_API_KEY) if ZENDESK_USER and ZENDESK_API_KEY else None
+oauth_token_manager = ZendeskOAuthTokenManager(
+    domain=BASE_DOMAIN,
+    client_id=ZENDESK_CLIENT_ID,
+    client_secret=ZENDESK_AUTH_SECRET,
+    scope=ZENDESK_OAUTH_SCOPE
+) if (BASE_DOMAIN and ZENDESK_CLIENT_ID and ZENDESK_AUTH_SECRET) else None
+
+auth = ZendeskAuth(
+    token_manager=oauth_token_manager,
+    user=ZENDESK_USER,
+    api_key=ZENDESK_API_KEY
+) if (oauth_token_manager or (ZENDESK_USER and ZENDESK_API_KEY)) else None
 
 # ---------- Cache buster helper ----------
 def get_cache_buster():
@@ -51,12 +62,15 @@ def get_cache_buster():
 @app.route('/')
 def index():
     zendesk_domain = BASE_DOMAIN if BASE_DOMAIN else 'Not configured'
-    zendesk_user = ZENDESK_USER if ZENDESK_USER else 'Not configured'
-    api_key_status = 'Configured' if ZENDESK_API_KEY else 'Not configured'
-
-    if BASE_DOMAIN and ZENDESK_API_KEY and ZENDESK_USER:
+    zendesk_user = ZENDESK_USER if ZENDESK_USER else (ZENDESK_CLIENT_ID if ZENDESK_CLIENT_ID else 'Not configured')
+    if oauth_token_manager and oauth_token_manager.is_configured():
+        api_key_status = 'OAuth2 Configured'
+        config_status = 'Ready'
+    elif ZENDESK_API_KEY and ZENDESK_USER and BASE_DOMAIN:
+        api_key_status = 'API Key Configured'
         config_status = 'Ready'
     else:
+        api_key_status = 'Not configured'
         config_status = 'Incomplete'
 
     recent_tickets = []
@@ -129,9 +143,17 @@ def index():
 # ---------- Debug API ----------
 @app.route('/debug-api')
 def debug_api():
+    is_oauth = bool(oauth_token_manager and oauth_token_manager.is_configured())
+    is_api_key = bool(ZENDESK_USER and ZENDESK_API_KEY)
+    auth_mode = "OAuth2" if is_oauth else ("API Token" if is_api_key else "None")
+
     debug_info = {
         "zendesk_url": BASE_DOMAIN,
         "zendesk_user": ZENDESK_USER,
+        "auth_mode": auth_mode,
+        "oauth_configured": is_oauth,
+        "oauth_client_id": ZENDESK_CLIENT_ID if ZENDESK_CLIENT_ID else None,
+        "oauth_secret_configured": bool(ZENDESK_AUTH_SECRET),
         "api_key_configured": bool(ZENDESK_API_KEY),
         "api_key_length": len(ZENDESK_API_KEY) if ZENDESK_API_KEY else 0
     }
@@ -141,10 +163,11 @@ def debug_api():
             url = f"https://{BASE_DOMAIN}/api/v2/tickets.json?per_page=1"
             headers = {"Content-Type": "application/json"}
             response = requests.get(url, auth=auth, headers=headers)
+            auth_header_desc = "Bearer ***" if is_oauth else f"{ZENDESK_USER}/token:***"
             debug_info.update({
                 "api_test_status": response.status_code,
                 "api_test_response": response.text[:500] if response.text else "No response",
-                "auth_header": f"{ZENDESK_USER}/token:***"
+                "auth_header": auth_header_desc
             })
         except Exception as e:
             debug_info["api_test_error"] = str(e)
@@ -360,5 +383,26 @@ def dashboard():
                            zendesk_domain=BASE_DOMAIN,
                            cache_buster=get_cache_buster())  # Add cache buster
 
-if __name__ == '__main__':
+# ---------- Ticket Comments API ----------
+@app.route('/tickets/<int:ticket_id>/comments')
+@app.route('/api/tickets/<int:ticket_id>/comments')
+def get_ticket_comments(ticket_id):
+    if not (BASE_DOMAIN and auth):
+        return jsonify({"error": "Zendesk not configured"}), 500
+    try:
+        url = f"https://{BASE_DOMAIN}/api/v2/tickets/{ticket_id}/comments.json"
+        headers = {"Content-Type": "application/json"}
+        resp = requests.get(url, auth=auth, headers=headers)
+        if resp.status_code == 200:
+            return jsonify(resp.json())
+        return jsonify({"error": f"Zendesk API error: {resp.status_code}", "details": resp.text}), resp.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def main():
     app.run(host='0.0.0.0', port=5000)
+
+
+if __name__ == '__main__':
+    main()

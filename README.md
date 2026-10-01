@@ -5,14 +5,16 @@ A modern Flask-based web service that integrates with Zendesk to provide real-ti
 ## Overview
 
 This application provides comprehensive Zendesk integration with:
-1. **Interactive Dashboard**: Real-time web interface showing recent tickets with auto-refresh
+1. **Interactive Dashboard**: Real-time web interface showing recent tickets and KPI metrics with auto-refresh
 2. **Webhook Endpoint**: Receives real-time notifications from Zendesk when tickets are created
-3. **API Integration**: Fetches and displays tickets from Zendesk REST API
-4. **Debug Tools**: Built-in debugging endpoints for troubleshooting
+3. **API Integration**: Fetches and displays tickets and ticket comments from the Zendesk REST API
+4. **OAuth2 Authentication**: Modern OAuth2 Client Credentials flow with thread-safe caching, auto-renewal, and 401 recovery
+5. **Debug Tools**: Built-in debugging endpoints for connection and authentication troubleshooting
 
 ## Features
 
 - **Real-time Dashboard**: Interactive web interface with live ticket display in Apple-inspired design
+- **KPI Metrics**: Dashboard view showing counts and distribution percentages for open, pending, solved, new, and on-hold tickets
 - **Auto-Refresh**: Dashboard automatically updates every 60 seconds with smart tab handling
 - **Enhanced Ticket Display**: Shows 10 most recent tickets with comprehensive details in full-width layout
 - **Timezone Support**: All timestamps displayed in EST (UTC-4) for New York timezone
@@ -20,18 +22,18 @@ This application provides comprehensive Zendesk integration with:
 - **Apple-Style Design**: Modern glassmorphism UI with backdrop blur effects and smooth animations
 - **Status Monitoring**: Color-coded ticket status and priority badges with Apple system colors
 - **Webhook Handler**: Processes incoming Zendesk webhook notifications
-- **Secure Authentication**: API token-based authentication with Zendesk
+- **OAuth2 Authentication**: Secure OAuth2 (Client Credentials Grant) Bearer token authentication with Zendesk, with automatic token management, caching, 401 recovery, and legacy API token fallback
+- **Ticket Comments API**: Fetches and serves comments for any ticket by ID
 - **Error Handling**: Comprehensive error handling and debugging information
-- **Environment Configuration**: Secure configuration via environment variables
+- **Environment Configuration**: Secure configuration via environment variables or Docker secrets
 - **Responsive Design**: Mobile-friendly interface with Apple design principles
-- **Debug Endpoint**: Built-in API connection testing and troubleshooting
+- **Debug Endpoint**: Built-in API connection testing and troubleshooting (`/debug-api`)
 
 ## Prerequisites
 
 - Python 3.8+
-- [uv](https://docs.astral.sh/uv/) - Modern Python package manager
-- A Zendesk account with API access
-- Valid Zendesk API credentials
+- [uv](https://docs.astral.sh/uv/) - Modern Python package manager (or pip)
+- A Zendesk account with OAuth client credentials (or legacy API token access)
 
 ## Installation
 
@@ -77,11 +79,7 @@ uv pip install -e ".[dev,scheduler,production]"
 # Copy the example environment file
 cp .env.example .env
 
-# Edit .env with your actual Zendesk credentials
-# Required variables:
-# ZENDESK_BASE_URL=https://your-domain.zendesk.com
-# ZENDESK_API_KEY=your_api_token_here
-# ZENDESK_USER=your.email@domain.com
+# Edit .env with your Zendesk OAuth2 credentials
 ```
 
 ## Configuration
@@ -92,30 +90,46 @@ Edit the `.env` file with your Zendesk credentials:
 
 ```env
 # Zendesk Configuration (Required)
-ZENDESK_BASE_URL=https://your-domain.zendesk.com
-ZENDESK_API_KEY=your_api_token_here
-ZENDESK_USER=your.email@domain.com
+SUBDOMAIN=your-domain.zendesk.com
 
-# Optional: Database Configuration (for future use)
+# Zendesk OAuth2 Credentials (Recommended)
+ZENDESK_CLIENT_ID="your_oauth_client_id"
+ZENDESK_AUTH_SECRET="your_oauth_client_secret"
+# Optional: OAuth scope (defaults to "read")
+# ZENDESK_OAUTH_SCOPE=read
+
+# Legacy Zendesk API Token (Optional fallback)
+ZENDESK_USER=your.email@domain.com
+ZENDESK_API_KEY=your_api_token_here
+
+# Database Configuration (Optional)
 DB_SERVER=your_db_server
 DB_DATABASE=zendesk
 DB_USERNAME=your_db_username
 DB_PASSWORD=your_db_password
 
-# Optional: Flask Configuration
+# Flask Configuration
 FLASK_ENV=development
 FLASK_DEBUG=True
+REFRESHTIME=60
 ```
 
-### Zendesk Setup
+### Zendesk OAuth Setup
 
-1. **Generate API Token**:
-   - Go to Zendesk Admin → Channels → API
-   - Enable Token Access
-   - Generate a new API token
+Since Zendesk has disabled API tokens, use the **Client Credentials Flow**:
+
+1. **Create an OAuth Client**:
+   - Go to Zendesk **Admin Center** → **Apps and integrations** → **APIs** → **Zendesk API**
+   - Click on the **OAuth clients** tab and select **Add OAuth client**
+   - Fill in:
+     - **Client Name**: `zendesk-ticket-webhook` (or your preferred name)
+     - **Company / Description**: Brief description of your integration
+     - **Unique Identifier**: Your `ZENDESK_CLIENT_ID`
+   - Click **Save**
+   - Copy the generated **Secret** immediately and set it as `ZENDESK_AUTH_SECRET` in `.env` (it is only shown once).
 
 2. **Configure Webhook** (Optional):
-   - Go to Zendesk Admin → Extensions → Webhooks
+   - Go to Zendesk **Admin Center** → **Apps and integrations** → **Webhooks**
    - Create a new webhook pointing to `http://your-server:5000/zendesk-webhook`
    - Set trigger conditions for ticket creation
 
@@ -130,11 +144,11 @@ python app.py
 
 **Production Mode**:
 ```bash
-# Using gunicorn (install with production extras)
+# Using gunicorn (Linux/macOS)
 uv pip install -e ".[production]"
 gunicorn --bind 0.0.0.0:5000 app:app
 
-# Or using waitress
+# Or using waitress (Windows/cross-platform)
 waitress-serve --host=0.0.0.0 --port=5000 app:app
 ```
 
@@ -142,20 +156,26 @@ The application will start on `http://localhost:5000`
 
 ### Web Interface
 
-#### Dashboard (Home Page)
+#### Recent Tickets Dashboard
 - **URL**: `http://localhost:5000/`
 - **Features**:
   - Real-time display of 10 most recent tickets
   - Auto-refresh every 60 seconds with live countdown
-  - Configuration status overview
-  - Service documentation and quick start guide
-  - Color-coded ticket status badges
-  - Ticket details: ID, status, subject, priority, creation date
+  - Color-coded status badges and priority tags
+  - Ticket details: ID, status, subject, description preview, requester, assignee, timestamps
+
+#### KPI Dashboard
+- **URL**: `http://localhost:5000/dashboard`
+- **Features**:
+  - Ticket count cards: Total, Open, Pending, Solved, New, On-Hold
+  - Percentage distribution breakdown
+  - Date range filtering
+  - Detailed lists of active tickets by status
 
 #### Debug Endpoint
 - **URL**: `http://localhost:5000/debug-api`
-- **Purpose**: Test Zendesk API connection and troubleshoot issues
-- **Returns**: JSON with connection status, configuration details, and error information
+- **Purpose**: Test Zendesk API connection and verify OAuth2 authentication status
+- **Returns**: JSON with authentication mode (`OAuth2`), connection status, client ID, and sample API response
 
 ### API Endpoints
 
@@ -183,59 +203,52 @@ curl -X POST http://localhost:5000/zendesk-webhook \
   -d '{"ticket":{"id":12345,"subject":"Test ticket","status":"new"}}'
 ```
 
-## Dashboard Features
+#### Ticket Comments Endpoint
+- **URL**: `/tickets/<ticket_id>/comments` or `/api/tickets/<ticket_id>/comments`
+- **Method**: `GET`
+- **Description**: Fetches comments for a specific Zendesk ticket using OAuth Bearer authentication
 
-### Real-time Ticket Display
-- Shows 10 most recent tickets from Zendesk in full-width layout
-- Modern Apple-inspired design with glassmorphism effects
-- Color-coded status and priority badges:
-  - **Status**: NEW (Green), OPEN (Orange), PENDING (Red-Orange), SOLVED (Gray), CLOSED (Dark)
-  - **Priority**: URGENT (Red), HIGH (Orange), NORMAL (Blue), LOW (Gray)
-- Comprehensive ticket information includes:
-  - Ticket ID with monospace styling
-  - Current status and priority badges
-  - Full subject line (truncated if very long)
-  - Ticket description preview
-  - Requester and assignee names
-  - Creation and last updated timestamps in EST (UTC-4)
+**Example**:
+```bash
+curl http://localhost:5000/tickets/4021/comments
+```
 
-### Auto-Refresh Functionality
-- Automatically refreshes every 60 seconds
-- Live countdown indicator in top-right corner
-- Smart behavior:
-  - Pauses when browser tab is inactive (saves resources)
-  - Resumes when tab becomes active again
-  - Shows "Refreshing..." message during reload
+## Testing
 
-### Configuration Overview
-- Shows Zendesk domain and user configuration
-- API key status indicator
-- Overall service readiness status
-- Real-time connection testing
+The project includes an automated test suite powered by `pytest` covering OAuth token management, thread-safe caching, 401 error recovery, and Flask API endpoints.
 
-### Service Information
-- Available API endpoints documentation
-- Quick start guide with copy-paste curl examples
-- Feature checklist (current and planned)
+Run the tests with:
+```bash
+pytest
+```
 
 ## Development
 
 ### Project Structure
 ```
 .
-├── app.py              # Main Flask application
-├── templates/          # HTML templates
-│   └── index.html      # Dashboard template with auto-refresh
-├── pyproject.toml      # Package configuration and dependencies
-├── .env.example        # Environment variables template
-├── .env                # Your actual config (gitignored)
-├── .gitignore          # Version control exclusions
-└── README.md           # This documentation
+├── app.py                  # Main Flask application and routes
+├── zendesk_auth.py         # OAuth2 token manager and requests Auth handler
+├── templates/              # HTML templates
+│   ├── index.html          # Recent tickets dashboard template
+│   └── dashboard.html      # KPI metrics dashboard template
+├── static/                 # Static assets (CSS, JS)
+│   ├── style.css           # Modern Apple-inspired styles
+│   └── script.js           # Auto-refresh and UI behavior
+├── tests/                  # Automated test suite
+│   ├── test_zendesk_auth.py# Token manager and auth unit tests
+│   └── test_app.py         # Flask route and integration tests
+├── pyproject.toml          # Package configuration and dependencies
+├── .env.example            # Environment variables template
+├── .env                    # Actual configuration (gitignored)
+├── changes.txt             # Changelog and modification records
+├── docker-compose.yml      # Docker Compose configuration (dev)
+├── docker-compose.prod.yml # Production Docker Compose with secrets
+├── Dockerfile              # Container definition
+└── README.md               # Documentation
 ```
 
 ### Package Management with uv
-
-The project uses modern Python packaging with `pyproject.toml`:
 
 **Core dependencies**:
 - `flask>=2.0.0` - Web framework
@@ -243,149 +256,29 @@ The project uses modern Python packaging with `pyproject.toml`:
 - `python-dotenv>=0.19.0` - Environment variable management
 
 **Optional dependencies**:
-- `dev`: Development tools (pytest, black, flake8, mypy, pre-commit)
-- `scheduler`: Task scheduling (schedule, apscheduler)
-- `production`: Production servers (gunicorn, waitress)
+- `dev`: Development tools (`pytest`, `pytest-flask`, `black`, `flake8`, `mypy`)
+- `scheduler`: Task scheduling (`schedule`, `apscheduler`)
+- `production`: Production servers (`gunicorn`, `waitress`)
 
-### Code Quality Tools
+## Docker Deployment
 
+### Local Docker Build
 ```bash
-# Format code
-black .
+# Build image
+docker build -t zendesk-webhook .
 
-# Check code style
-flake8 .
+# Run with .env file
+docker run -p 5000:5000 --env-file .env zendesk-webhook
 
-# Type checking
-mypy app.py
-
-# Run tests (when available)
-pytest
+# Or using Docker Compose
+docker compose up --build
 ```
 
-### Adding Features
+### Docker Swarm / Portainer Production Deployment
 
-To extend the application:
-1. Add new routes in `app.py`
-2. Create new templates in `templates/`
-3. Update `pyproject.toml` for new dependencies
-4. Customize the dashboard template in `templates/index.html`
-5. Add tests in a `tests/` directory
+Production deployment supports Docker secrets for confidential OAuth credentials:
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Errors**:
-   - Verify API token is correct and active
-   - Ensure email format matches your Zendesk account
-   - Check Zendesk domain URL format
-
-2. **Dashboard Not Loading Tickets**:
-   - Visit `/debug-api` endpoint to test API connection
-   - Check browser console for JavaScript errors
-   - Verify all environment variables are set correctly
-   - Ensure network connectivity to Zendesk
-
-3. **Auto-Refresh Not Working**:
-   - Check browser console for JavaScript errors
-   - Ensure JavaScript is enabled in your browser
-   - Try manually refreshing the page
-   - Verify the tab is active (refresh pauses on inactive tabs)
-
-4. **Webhook Not Receiving Data**:
-   - Verify webhook URL is publicly accessible
-   - Check Zendesk webhook configuration and triggers
-   - Test with the provided curl command
-
-5. **API Rate Limiting**:
-   - Zendesk has API rate limits (700 requests per minute)
-   - Monitor console output for rate limit messages
-   - Consider implementing caching for production use
-
-### Debug Information
-
-**Check the debug endpoint**:
-```bash
-curl http://localhost:5000/debug-api
-```
-
-**Monitor application logs**:
-```bash
-python app.py 2>&1 | tee app.log
-```
-
-**Console debugging**: The application prints detailed debug information including:
-- API response status codes
-- Number of tickets found and displayed
-- Configuration status
-- Error details and stack traces
-
-## Security Considerations
-
-- **Environment Variables**: Never commit `.env` files to version control
-- **HTTPS**: Use HTTPS in production for webhook endpoints
-- **Webhook Validation**: Consider implementing webhook signature validation
-- **API Credentials**: Store sensitive data only in environment variables
-- **Debug Endpoint**: Disable `/debug-api` in production or add authentication
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run code quality checks (`black .`, `flake8 .`, `mypy app.py`)
-5. Add tests if applicable
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues and questions:
-- **Bug Reports**: Create an issue in the repository
-- **Documentation**: Check this README and code comments
-- **Troubleshooting**: Use the `/debug-api` endpoint
-- **Zendesk API**: Review [Zendesk API documentation](https://developer.zendesk.com/api-reference/)
-
----
-
-**Production Deployment Notes**: 
-- Use a production WSGI server (gunicorn, waitress)
-- Set up proper logging and monitoring
-- Implement database persistence for ticket data
-- Add authentication for sensitive endpoints
-- Configure SSL/TLS certificates
-- Set up automated backups and health checks
-
-
-
-**Docker build image**:
-- `docker build -t zendesk-webhook .`
-- `docker run -p 5000:5000 --env-file .env zendesk-webhook`
-- `docker compose build` or `docker compose up --build`
-
-
-
-** set variables as:
-
-ZENDESK_USER = get_secret("ZENDESK_USER")
-ZENDESK_API_KEY = get_secret("ZENDESK_API_KEY")
-SUBDOMAIN = get_secret("SUBDOMAIN")
-DB_SERVER = get_secret("DB_SERVER")
-DB_DATABASE = get_secret("DB_DATABASE")
-DB_USERNAME = get_secret("DB_USERNAME")
-DB_PASSWORD = get_secret("DB_PASSWORD")
-
-** Run on Lunix or `Portainer`
-
-set `secrets` then run stack with `swam`
-
-```bash
+```yaml
 version: "3.8"
 
 services:
@@ -400,6 +293,8 @@ services:
     restart: unless-stopped
     secrets:
       - SUBDOMAIN
+      - ZENDESK_CLIENT_ID
+      - ZENDESK_AUTH_SECRET
       - ZENDESK_API_KEY
       - ZENDESK_USER
       - DB_SERVER
@@ -409,6 +304,10 @@ services:
 
 secrets:
   SUBDOMAIN:
+    external: true
+  ZENDESK_CLIENT_ID:
+    external: true
+  ZENDESK_AUTH_SECRET:
     external: true
   ZENDESK_API_KEY:
     external: true
@@ -422,6 +321,8 @@ secrets:
     external: true
   DB_PASSWORD:
     external: true
-
-
 ```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

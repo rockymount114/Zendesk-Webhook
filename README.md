@@ -342,3 +342,5 @@ To allow GitHub Actions to authenticate and push to Docker Hub, configure these 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+

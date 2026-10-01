@@ -11,11 +11,11 @@ WORKDIR /app
 
 # Install system dependencies including Microsoft ODBC Driver and build tools
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget gnupg2 build-essential && \
+    apt-get install -y --no-install-recommends wget gnupg2 build-essential unixodbc && \
     wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" > /etc/apt/sources.list.d/microsoft.list && \
+    echo "deb [signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/microsoft.list && \
     apt-get update && \
-    apt-get install -y --no-install-recommends msodbcsql17 && \
+    (apt-get install -y --no-install-recommends msodbcsql17 || apt-get install -y --no-install-recommends msodbcsql18) && \
     apt-get purge -y --auto-remove wget gnupg2 && \
     rm -rf /var/lib/apt/lists/*
 

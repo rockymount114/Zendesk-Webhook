@@ -1,6 +1,6 @@
 services:
   zendesk-dashboard:
-    image: zjxteusa/zendesk-dashboard:latest
+    image: zjxteusa/zendesk-webhook:latest
     container_name: zendesk-dashboard
     ports:
       - "5000:5000"

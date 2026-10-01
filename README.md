@@ -323,6 +323,22 @@ secrets:
     external: true
 ```
 
+## CI/CD & Docker Hub Automated Build
+
+A GitHub Actions workflow is configured in [`.github/workflows/docker-build-push.yml`](.github/workflows/docker-build-push.yml) to automatically:
+1. Run the automated test suite (`pytest`) on Python 3.11.
+2. Build the Docker container image.
+3. Push the image to Docker Hub as [`zjxteusa/zendesk-webhook:latest`](https://hub.docker.com/r/zjxteusa/zendesk-webhook) on push to the `main` branch or on release tags.
+
+### Required GitHub Secrets
+
+To allow GitHub Actions to authenticate and push to Docker Hub, configure these secrets in your repository (**Settings** → **Secrets and variables** → **Actions** → **New repository secret**):
+
+| Secret Name | Description | Example |
+|---|---|---|
+| `DOCKERHUB_USERNAME` | Docker Hub username | `zjxteusa` |
+| `DOCKERHUB_TOKEN` | Docker Hub Personal Access Token (PAT) with Read/Write permissions | `dckr_pat_...` |
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

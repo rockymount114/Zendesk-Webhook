@@ -42,3 +42,12 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Updated documentation to describe Zendesk OAuth2 setup, client credentials flow,
      new endpoints (`/tickets/<id>/comments`, `/dashboard`), automated testing with pytest,
      and Docker secrets configuration for OAuth.
+
+6. Docker Hub CI/CD Pipeline:
+   - Created `.github/workflows/docker-build-push.yml` to automatically run tests (`pytest`)
+     and build and push the Docker image to Docker Hub as `zjxteusa/zendesk-webhook`
+     on push to `main` branch or release tags.
+   - Updated `Dockerfile` with Debian 12 (Bookworm) Microsoft repository configuration
+     for ODBC SQL Server driver compatibility.
+   - Updated `docker-compose.yml` image name to `zjxteusa/zendesk-webhook:latest`.
+   - Updated `README.md` with instructions on GitHub Secrets (`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`).

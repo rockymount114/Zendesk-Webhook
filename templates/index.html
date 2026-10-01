@@ -15,11 +15,16 @@
     <div id="refresh-indicator" class="refresh-indicator">Auto-refresh in 60s</div>
     
     <div class="container">
+        <!-- Top Navigation -->
+        <nav class="nav-bar">
+            <a href="{{ url_for('index') }}" class="nav-link active">🎫 Recent Tickets</a>
+            <a href="{{ url_for('dashboard') }}" class="nav-link">📊 KPI Dashboard</a>
+            <a href="{{ url_for('open_tickets_page') }}" class="nav-link">📋 All Open Tickets</a>
+        </nav>
+
         <div class="header">
             <h1>Zendesk Ticket Dashboard</h1>
             <p>A real-time dashboard for monitoring Zendesk tickets</p>
-            <span class="status running">🟢<a href="{{ url_for('dashboard') }}" target="_blank" rel="noopener noreferrer" class="status running">Service Running</a></span>
-            
         </div>
 
         <!-- recent ticket section -->

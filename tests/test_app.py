@@ -145,3 +145,59 @@ class TestAppRoutes:
         response = client.get("/dashboard")
         assert response.status_code == 200
         assert b"Zendesk KPIs" in response.data
+
+    @patch("app.requests.get")
+    def test_open_tickets_page_configured(self, mock_get, client):
+        import app
+        app._open_tickets_cache = {"timestamp": 0, "tickets": [], "requesters": [], "assignees": []}
+
+        mock_search_resp = MagicMock()
+        mock_search_resp.status_code = 200
+        mock_search_resp.json.return_value = {
+            "results": [
+                {
+                    "id": 5001,
+                    "subject": "Printer issue in room 102",
+                    "description": "Paper jam",
+                    "status": "open",
+                    "priority": "normal",
+                    "created_at": "2026-03-01T14:00:00Z",
+                    "updated_at": "2026-03-01T15:00:00Z",
+                    "requester_id": 101,
+                    "assignee_id": 202,
+                }
+            ],
+            "next_page": None,
+        }
+
+        mock_users_resp = MagicMock()
+        mock_users_resp.status_code = 200
+        mock_users_resp.json.return_value = {
+            "users": [
+                {"id": 101, "name": "Alice Cooper"},
+                {"id": 202, "name": "Bob Dylan"},
+            ]
+        }
+
+        mock_get.side_effect = [mock_search_resp, mock_users_resp]
+
+        response = client.get("/open-tickets")
+        assert response.status_code == 200
+        content = response.data.decode("utf-8")
+        assert "All Open Tickets" in content
+        assert "5001" in content
+        assert "Printer issue in room 102" in content
+        assert "Alice Cooper" in content
+        assert "Bob Dylan" in content
+        assert "ticket-counter" in content
+
+    def test_open_tickets_page_unconfigured(self, monkeypatch, client):
+        import app
+        app._open_tickets_cache = {"timestamp": 0, "tickets": [], "requesters": [], "assignees": []}
+        monkeypatch.setattr(app, "BASE_DOMAIN", None)
+        monkeypatch.setattr(app, "auth", None)
+
+        response = client.get("/open-tickets")
+        assert response.status_code == 200
+        content = response.data.decode("utf-8")
+        assert "Zendesk not configured" in content

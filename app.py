@@ -400,6 +400,159 @@ def get_ticket_comments(ticket_id):
         return jsonify({"error": str(e)}), 500
 
 
+# ---------- User Map Helper with in-memory caching ----------
+_user_cache = {}
+
+
+def get_users_map(user_ids):
+    global _user_cache
+    if not (BASE_DOMAIN and auth and user_ids):
+        return _user_cache
+
+    missing_ids = [uid for uid in set(user_ids) if uid and uid not in _user_cache]
+    if missing_ids:
+        chunk_size = 100
+        headers = {"Content-Type": "application/json"}
+        for i in range(0, len(missing_ids), chunk_size):
+            chunk = missing_ids[i:i + chunk_size]
+            try:
+                user_url = f"https://{BASE_DOMAIN}/api/v2/users/show_many.json?ids={','.join(map(str, chunk))}"
+                resp = requests.get(user_url, auth=auth, headers=headers)
+                if resp.status_code == 200:
+                    for u in resp.json().get('users', []):
+                        _user_cache[u['id']] = u.get('name', 'Unknown')
+                else:
+                    print(f"Error fetching user chunk: Status {resp.status_code}")
+            except Exception as e:
+                print(f"Exception fetching users: {e}")
+
+    return _user_cache
+
+
+# ---------- All Open Tickets Helper & Cache ----------
+_open_tickets_cache = {"timestamp": 0, "tickets": [], "requesters": [], "assignees": []}
+
+
+def get_all_open_tickets(force_refresh: bool = False):
+    global _open_tickets_cache
+    now = time.time()
+    # Cache for 30 seconds unless force_refresh is requested
+    if not force_refresh and (now - _open_tickets_cache["timestamp"] < 30) and _open_tickets_cache["tickets"]:
+        return _open_tickets_cache["tickets"], _open_tickets_cache["requesters"], _open_tickets_cache["assignees"], None
+
+    if not (BASE_DOMAIN and auth):
+        return [], [], [], "Zendesk not configured"
+
+    headers = {"Content-Type": "application/json"}
+    search_url = f"https://{BASE_DOMAIN}/api/v2/search.json"
+    params = {
+        "query": "type:ticket status<solved",
+        "sort_by": "created_at",
+        "sort_order": "desc",
+        "per_page": 100,
+    }
+
+    all_tickets = []
+
+    try:
+        resp = requests.get(search_url, headers=headers, params=params, auth=auth)
+        if resp.status_code != 200:
+            return [], [], [], f"API Error {resp.status_code}: {resp.text[:200]}"
+
+        data = resp.json()
+        all_tickets.extend(data.get("results", []))
+        next_page = data.get("next_page")
+
+        page_count = 1
+        max_pages = 10  # safety cap up to 1000 tickets
+        while next_page and page_count < max_pages:
+            page_count += 1
+            next_resp = requests.get(next_page, headers=headers, auth=auth)
+            if next_resp.status_code != 200:
+                break
+            next_data = next_resp.json()
+            all_tickets.extend(next_data.get("results", []))
+            next_page = next_data.get("next_page")
+
+        # Collect user IDs
+        user_ids = set()
+        for t in all_tickets:
+            if t.get("requester_id"):
+                user_ids.add(t["requester_id"])
+            if t.get("assignee_id"):
+                user_ids.add(t["assignee_id"])
+
+        users_map = get_users_map(user_ids)
+        ny_timezone = timezone(timedelta(hours=-4))
+
+        for ticket in all_tickets:
+            # Format timestamps
+            if ticket.get("created_at"):
+                try:
+                    dt = datetime.fromisoformat(ticket["created_at"].replace("Z", "+00:00"))
+                    dt_ny = dt.astimezone(ny_timezone)
+                    ticket["created_at_formatted"] = dt_ny.strftime("%Y-%m-%d %H:%M:%S EST")
+                    ticket["created_date"] = dt_ny.strftime("%Y-%m-%d")
+                except Exception:
+                    ticket["created_at_formatted"] = ticket.get("created_at", "N/A")
+                    ticket["created_date"] = ""
+            else:
+                ticket["created_at_formatted"] = "N/A"
+                ticket["created_date"] = ""
+
+            if ticket.get("updated_at"):
+                try:
+                    dt = datetime.fromisoformat(ticket["updated_at"].replace("Z", "+00:00"))
+                    ticket["updated_at_formatted"] = dt.astimezone(ny_timezone).strftime("%Y-%m-%d %H:%M:%S EST")
+                except Exception:
+                    ticket["updated_at_formatted"] = ticket.get("updated_at", "N/A")
+            else:
+                ticket["updated_at_formatted"] = "N/A"
+
+            subject = ticket.get("subject") or "No subject"
+            ticket["subject_short"] = subject[:80] + ("..." if len(subject) > 80 else "")
+            ticket["description"] = ticket.get("description") or "No description"
+
+            ticket["requester_name"] = users_map.get(ticket.get("requester_id"), "Unknown")
+            ticket["assignee_name"] = users_map.get(ticket.get("assignee_id"), "Unassigned")
+
+        # Sort newest first
+        all_tickets.sort(key=lambda t: t.get("created_at", ""), reverse=True)
+
+        # Extract distinct sorted requesters and assignees
+        requesters = sorted({t["requester_name"] for t in all_tickets if t.get("requester_name") and t["requester_name"] != "Unknown"})
+        assignees = sorted({t["assignee_name"] for t in all_tickets if t.get("assignee_name") and t["assignee_name"] != "Unassigned"})
+
+        _open_tickets_cache = {
+            "timestamp": now,
+            "tickets": all_tickets,
+            "requesters": requesters,
+            "assignees": assignees,
+        }
+        return all_tickets, requesters, assignees, None
+
+    except Exception as e:
+        print(f"Exception loading open tickets: {e}")
+        return [], [], [], str(e)
+
+
+# ---------- All Open Tickets Page Route ----------
+@app.route('/open-tickets')
+def open_tickets_page():
+    force_refresh = (request.args.get('refresh') == '1')
+    tickets, requesters, assignees, error = get_all_open_tickets(force_refresh=force_refresh)
+
+    return render_template(
+        'open_tickets.html',
+        tickets=tickets,
+        requesters=requesters,
+        assignees=assignees,
+        tickets_error=error,
+        zendesk_domain=BASE_DOMAIN,
+        cache_buster=get_cache_buster()
+    )
+
+
 def main():
     app.run(host='0.0.0.0', port=5000)
 

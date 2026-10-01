@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>All Open Tickets - Zendesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ cache_buster }}">
+    <script src="{{ url_for('static', filename='open_tickets.js') }}?v={{ cache_buster }}" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Navigation -->
+        <nav class="nav-bar">
+            <a href="{{ url_for('index') }}" class="nav-link">🎫 Recent Tickets</a>
+            <a href="{{ url_for('dashboard') }}" class="nav-link">📊 KPI Dashboard</a>
+            <a href="{{ url_for('open_tickets_page') }}" class="nav-link active">📋 All Open Tickets</a>
+        </nav>
+
+        <!-- Header -->
+        <div class="header">
+            <h1>All Open Tickets</h1>
+            <p>Real-time active tickets monitor with multi-criteria filtering</p>
+        </div>
+
+        {% if tickets_error %}
+        <div class="error-message">
+            <strong>⚠️ Error loading open tickets:</strong> {{ tickets_error }}
+        </div>
+        {% endif %}
+
+        <!-- Filter Card -->
+        <div class="filter-card">
+            <div class="filter-header">
+                <h3><span>🔍</span> Filter & Search Tickets</h3>
+                <div class="filter-controls-right">
+                    <span id="ticket-counter" class="badge-counter">Showing {{ tickets|length }} of {{ tickets|length }} tickets</span>
+                </div>
+            </div>
+
+            <div class="filter-grid">
+                <!-- Ticket ID -->
+                <div class="filter-group">
+                    <label for="filter-id">Ticket ID</label>
+                    <input type="text" id="filter-id" class="filter-input" placeholder="e.g. 4021">
+                </div>
+
+                <!-- Subject -->
+                <div class="filter-group">
+                    <label for="filter-subject">Subject</label>
+                    <input type="text" id="filter-subject" class="filter-input" placeholder="Search in subject...">
+                </div>
+
+                <!-- Status Filter -->
+                <div class="filter-group">
+                    <label for="filter-status">Status</label>
+                    <select id="filter-status" class="filter-input">
+                        <option value="all">All Active Statuses</option>
+                        <option value="new">New</option>
+                        <option value="open">Open</option>
+                        <option value="pending">Pending</option>
+                        <option value="on-hold">On-Hold</option>
+                        <option value="hold">Hold</option>
+                    </select>
+                </div>
+
+                <!-- Requester -->
+                <div class="filter-group">
+                    <label for="filter-requester">Requester</label>
+                    <input type="text" id="filter-requester" class="filter-input" list="requester-datalist" placeholder="Select or type requester...">
+                    <datalist id="requester-datalist">
+                        {% for req in requesters %}
+                        <option value="{{ req }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <!-- Assignee -->
+                <div class="filter-group">
+                    <label for="filter-assignee">Assignee</label>
+                    <input type="text" id="filter-assignee" class="filter-input" list="assignee-datalist" placeholder="Select or type assignee...">
+                    <datalist id="assignee-datalist">
+                        {% for ass in assignees %}
+                        <option value="{{ ass }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <!-- Created Date Range -->
+                <div class="filter-group">
+                    <label for="filter-start-date">Created From</label>
+                    <input type="date" id="filter-start-date" class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-end-date">Created To</label>
+                    <input type="date" id="filter-end-date" class="filter-input">
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <div class="filter-buttons-left">
+                    <button type="button" id="btn-clear-filters" class="btn btn-secondary">🔄 Clear Filters</button>
+                    <button type="button" id="btn-export-csv" class="btn btn-primary">📥 Export CSV</button>
+                </div>
+                <div class="filter-buttons-right">
+                    <button type="button" id="btn-refresh" class="btn btn-secondary">⚡ Refresh Now</button>
+                    <label class="auto-refresh-toggle">
+                        <input type="checkbox" id="toggle-auto-refresh" checked>
+                        Auto-refresh: <strong id="refresh-countdown">60s</strong>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets Table -->
+        <div class="table-responsive">
+            <table class="tickets-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-col="id">ID <span class="sort-arrow">↕</span></th>
+                        <th class="sortable" data-col="subject">Subject <span class="sort-arrow">↕</span></th>
+                        <th class="sortable" data-col="requester">Requester <span class="sort-arrow">↕</span></th>
+                        <th class="sortable" data-col="assignee">Assignee <span class="sort-arrow">↕</span></th>
+                        <th class="sortable" data-col="status">Status <span class="sort-arrow">↕</span></th>
+                        <th class="sortable" data-col="priority">Priority <span class="sort-arrow">↕</span></th>
+                        <th class="sortable active-sort" data-col="date">Created At (EST) <span class="sort-arrow">▼</span></th>
+                        <th class="sortable" data-col="updated">Updated At (EST) <span class="sort-arrow">↕</span></th>
+                    </tr>
+                </thead>
+                <tbody id="tickets-tbody">
+                    {% if tickets %}
+                        {% for ticket in tickets %}
+                        <tr class="ticket-row"
+                            data-id="{{ ticket.id }}"
+                            data-subject="{{ ticket.subject|e }}"
+                            data-requester="{{ ticket.requester_name|e }}"
+                            data-assignee="{{ ticket.assignee_name|e }}"
+                            data-status="{{ ticket.status }}"
+                            data-priority="{{ ticket.priority or '' }}"
+                            data-date="{{ ticket.created_date }}"
+                            data-created-formatted="{{ ticket.created_at_formatted }}"
+                            data-updated-formatted="{{ ticket.updated_at_formatted }}"
+                            data-url="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}">
+                            <td>
+                                <a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" class="ticket-id-link">
+                                    #{{ ticket.id }} ↗
+                                </a>
+                            </td>
+                            <td>
+                                <div class="subject-cell" title="{{ ticket.description|e }}">
+                                    {{ ticket.subject_short or ticket.subject }}
+                                </div>
+                            </td>
+                            <td>{{ ticket.requester_name }}</td>
+                            <td>{{ ticket.assignee_name }}</td>
+                            <td>
+                                <span class="status-badge status-{{ ticket.status }}">{{ ticket.status }}</span>
+                            </td>
+                            <td>
+                                <span class="priority-badge priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
+                            </td>
+                            <td>{{ ticket.created_at_formatted }}</td>
+                            <td>{{ ticket.updated_at_formatted }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr id="empty-state-row">
+                            <td colspan="8" class="empty-table-message">
+                                🎉 No open tickets found!
+                            </td>
+                        </tr>
+                    {% endif %}
+                    <tr id="no-results-row" style="display: none;">
+                        <td colspan="8" class="empty-table-message">
+                            🔍 No tickets match the selected filters. Click <strong>Clear Filters</strong> to reset.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer-card">
+            <p>🔧 <strong>Zendesk Ticket Dashboard</strong> | Developed by X</p>
+        </div>
+    </div>
+</body>
+</html>

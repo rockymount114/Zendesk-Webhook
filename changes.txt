@@ -57,3 +57,11 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Added explicit test environment variables to the Run pytest step in GitHub Actions.
    - Added unit tests for unconfigured comments route and dashboard route in tests/test_app.py.
    - All 22 tests passing both with and without .env.
+
+8. All Open Tickets Page & Dynamic Filtering:
+   - Added `/open-tickets` route to `app.py` with `get_all_open_tickets()` helper, fetching all active tickets (`status<solved`) via Zendesk Search API with pagination.
+   - Added `get_users_map()` with in-memory caching to batch-resolve requester and assignee names via Zendesk Users API (`users/show_many.json`).
+   - Created `templates/open_tickets.html` featuring Apple-inspired UI, multi-criteria filter controls (Ticket ID, Subject, Status, Requester, Assignee, Created Date Range), live counter badge, clear button, CSV export, and refresh controls.
+   - Created `static/open_tickets.js` providing instant real-time browser filtering, column sorting, CSV export, and auto-refresh countdown.
+   - Added top navigation bar across `index.html`, `dashboard.html`, and `open_tickets.html` to connect all sections.
+   - Extended test suite in `tests/test_app.py` with tests for `/open-tickets` (configured and unconfigured states). All 24 tests passing.

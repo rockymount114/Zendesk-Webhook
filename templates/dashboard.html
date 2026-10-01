@@ -59,6 +59,12 @@
 </head>
 <body>
 
+<nav class="nav-bar">
+    <a href="{{ url_for('index') }}" class="nav-link">🎫 Recent Tickets</a>
+    <a href="{{ url_for('dashboard') }}" class="nav-link active">📊 KPI Dashboard</a>
+    <a href="{{ url_for('open_tickets_page') }}" class="nav-link">📋 All Open Tickets</a>
+</nav>
+
 <h1>Zendesk KPIs</h1>
 
 <form method="post">

@@ -172,6 +172,24 @@ The application will start on `http://localhost:5000`
   - Date range filtering
   - Detailed lists of active tickets by status
 
+#### All Open Tickets Monitor
+- **URL**: `http://localhost:5000/open-tickets`
+- **Features**:
+  - Comprehensive monitor of all active/unsolved tickets (`new`, `open`, `pending`, `on-hold`)
+  - Real-time client-side instant filtering across:
+    - **Ticket ID**: Numeric or partial text match
+    - **Subject**: Substring keyword search
+    - **Status**: Status filter dropdown
+    - **Requester**: Autocomplete datalist + text search
+    - **Assignee**: Autocomplete datalist + text search
+    - **Created Date Range**: Start date & end date pickers
+  - Live ticket counter badge (*"Showing X of Y tickets"*)
+  - Clickable column sorting by clicking table headers (ascending/descending toggle)
+  - One-click "Clear Filters" button
+  - "Export CSV" button to download current filtered results
+  - Direct clickable links to tickets in Zendesk (`/agent/tickets/{id}`)
+  - Manual "Refresh Now" button and toggleable 60-second auto-refresh timer
+
 #### Debug Endpoint
 - **URL**: `http://localhost:5000/debug-api`
 - **Purpose**: Test Zendesk API connection and verify OAuth2 authentication status

@@ -139,12 +139,47 @@ class TestAppRoutes:
                 "solved_tickets": [],
                 "new_tickets": [],
                 "on_hold_tickets": [],
+                "tickets": [
+                    {
+                        "id": 4021,
+                        "subject": "Test open ticket",
+                        "status": "open",
+                        "priority": "high",
+                        "created_at": "2026-03-01T12:00:00Z",
+                        "updated_at": "2026-03-01T13:00:00Z",
+                    }
+                ],
             },
             200,
         )
         response = client.get("/dashboard")
         assert response.status_code == 200
         assert b"Zendesk KPIs" in response.data
+        assert b'data-status="open"' in response.data
+        assert b"Test open ticket" in response.data
+        assert b'data-status="all"' in response.data
+
+    @patch("app.requests.get")
+    def test_ticket_counts_collects_all_ticket_details_and_hold_status(self, mock_get):
+        import app
+
+        response = MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            "results": [
+                {"id": 1, "status": "open"},
+                {"id": 2, "status": "hold"},
+            ],
+            "next_page": None,
+        }
+        mock_get.return_value = response
+
+        stats, status_code = app.get_ticket_counts("2026-03-01", "2026-03-01")
+
+        assert status_code == 200
+        assert stats["total"] == 2
+        assert stats["on-hold"] == 1
+        assert [ticket["id"] for ticket in stats["tickets"]] == [1, 2]
 
     @patch("app.requests.get")
     def test_open_tickets_page_configured(self, mock_get, client):

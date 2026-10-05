@@ -11,18 +11,26 @@
     <script src="{{ url_for('static', filename='open_tickets.js') }}?v={{ cache_buster }}" defer></script>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to open tickets</a>
     <div class="container">
-        <!-- Top Navigation -->
-        <nav class="nav-bar">
-            <a href="{{ url_for('index') }}" class="nav-link">🎫 Recent Tickets</a>
-            <a href="{{ url_for('dashboard') }}" class="nav-link">📊 KPI Dashboard</a>
-            <a href="{{ url_for('open_tickets_page') }}" class="nav-link active">📋 All Open Tickets</a>
-        </nav>
+        <header class="app-topbar">
+            <a class="brand-lockup" href="{{ url_for('index') }}" aria-label="City of Rocky Mount Service Desk home">
+                <span class="brand-monogram" aria-hidden="true">RM</span>
+                <span class="brand-copy"><strong>Rocky Mount</strong><small>Service desk</small></span>
+            </a>
+            <nav class="nav-bar" aria-label="Main navigation">
+                <a href="{{ url_for('index') }}" class="nav-link">Recent</a>
+                <a href="{{ url_for('dashboard') }}" class="nav-link">KPIs</a>
+                <a href="{{ url_for('open_tickets_page') }}" class="nav-link active" aria-current="page">Open tickets</a>
+            </nav>
+            <span class="header-note"><span class="live-dot" aria-hidden="true"></span>Active queue</span>
+        </header>
 
-        <!-- Header -->
-        <div class="header">
+        <main id="main-content">
+        <div class="header page-heading">
+            <div class="eyebrow">WORK QUEUE</div>
             <h1>All Open Tickets</h1>
-            <p>Real-time active tickets monitor with multi-criteria filtering</p>
+            <p>Find and review active requests</p>
         </div>
 
         {% if tickets_error %}
@@ -35,8 +43,8 @@
         <div class="filter-toolbar">
             <div class="filter-inputs-row">
                 <span class="filter-icon" title="Filter Tickets">🔍</span>
-                <input type="text" id="filter-id" class="filter-input-inline filter-id-input" placeholder="ID...">
-                <input type="text" id="filter-subject" class="filter-input-inline filter-subject-input" placeholder="Subject keyword...">
+                <input type="text" id="filter-id" class="filter-input-inline filter-id-input" placeholder="ID..." aria-label="Filter by ticket ID">
+                <input type="text" id="filter-subject" class="filter-input-inline filter-subject-input" placeholder="Subject keyword..." aria-label="Filter by subject">
                 <select id="filter-status" class="filter-input-inline filter-status-select">
                     <option value="all">All Statuses</option>
                     <option value="new">New</option>
@@ -45,29 +53,29 @@
                     <option value="on-hold">On-Hold</option>
                     <option value="hold">Hold</option>
                 </select>
-                <input type="text" id="filter-requester" class="filter-input-inline filter-user-input" list="requester-datalist" placeholder="Requester...">
+                <input type="text" id="filter-requester" class="filter-input-inline filter-user-input" list="requester-datalist" placeholder="Requester..." aria-label="Filter by requester">
                 <datalist id="requester-datalist">
                     {% for req in requesters %}
                     <option value="{{ req }}">
                     {% endfor %}
                 </datalist>
-                <input type="text" id="filter-assignee" class="filter-input-inline filter-user-input" list="assignee-datalist" placeholder="Assignee...">
+                <input type="text" id="filter-assignee" class="filter-input-inline filter-user-input" list="assignee-datalist" placeholder="Assignee..." aria-label="Filter by assignee">
                 <datalist id="assignee-datalist">
                     {% for ass in assignees %}
                     <option value="{{ ass }}">
                     {% endfor %}
                 </datalist>
                 <div class="filter-date-group">
-                    <input type="date" id="filter-start-date" class="filter-input-inline filter-date-input" title="Created From">
+                    <input type="date" id="filter-start-date" class="filter-input-inline filter-date-input" title="Created From" aria-label="Created from">
                     <span class="date-sep">–</span>
-                    <input type="date" id="filter-end-date" class="filter-input-inline filter-date-input" title="Created To">
+                    <input type="date" id="filter-end-date" class="filter-input-inline filter-date-input" title="Created To" aria-label="Created to">
                 </div>
             </div>
 
             <div class="filter-actions-row">
                 <button type="button" id="btn-clear-filters" class="btn btn-secondary btn-sm" title="Clear all filters">Clear</button>
-                <button type="button" id="btn-export-csv" class="btn btn-primary btn-sm" title="Export filtered tickets to CSV">📥 CSV</button>
-                <button type="button" id="btn-refresh" class="btn btn-secondary btn-sm" title="Refresh from Zendesk">⚡ Refresh</button>
+                <button type="button" id="btn-export-csv" class="btn btn-primary btn-sm" title="Export filtered tickets to CSV">Export CSV</button>
+                <button type="button" id="btn-refresh" class="btn btn-secondary btn-sm" title="Refresh from Zendesk">Refresh</button>
                 <label class="auto-refresh-toggle-sm" title="Auto-refresh every 60 seconds">
                     <input type="checkbox" id="toggle-auto-refresh">
                     <span>Auto: <strong id="refresh-countdown">Off</strong></span>
@@ -163,8 +171,9 @@
         </div>
 
         <div class="footer-card">
-            <p>🔧 <strong>Zendesk Ticket Dashboard</strong> | Developed by X</p>
+            <p>City of Rocky Mount <span aria-hidden="true">·</span> Service desk</p>
         </div>
+        </main>
     </div>
 </body>
 </html>

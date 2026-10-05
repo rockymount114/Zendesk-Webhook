@@ -206,12 +206,16 @@ def get_ticket_counts(start_date: str, end_date: str):
     total_stats = {
         'total': 0, 'open': 0, 'pending': 0, 'closed': 0, 'new': 0, 'on-hold': 0, 'solved': 0,
         'open_tickets': [], 'pending_tickets': [], 'solved_tickets': [], 'new_tickets': [], 'on_hold_tickets': [],
+        'tickets': [],
     }
 
     def accumulate_page_stats(page_data, stats_accumulator):
         for t in page_data.get('results', []):
             stats_accumulator['total'] += 1
+            stats_accumulator['tickets'].append(t)
             status = (t.get('status') or '').lower()
+            if status == 'hold':
+                status = 'on-hold'
             if status in stats_accumulator:
                 stats_accumulator[status] += 1
             
@@ -306,6 +310,11 @@ def dashboard():
         solved_tickets = stats.get('solved_tickets', [])
         new_tickets = stats.get('new_tickets', [])
         on_hold_tickets = stats.get('on_hold_tickets', [])
+        all_tickets = stats.get('tickets')
+        if all_tickets is None:
+            all_tickets = (
+                open_tickets + pending_tickets + solved_tickets + new_tickets + on_hold_tickets
+            )
 
         open_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         pending_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
@@ -313,7 +322,7 @@ def dashboard():
         new_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         on_hold_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         
-        all_tickets = open_tickets + pending_tickets + solved_tickets + new_tickets + on_hold_tickets      
+        all_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
         
         if all_tickets and BASE_DOMAIN and auth:
             user_ids = set()
@@ -374,6 +383,7 @@ def dashboard():
                            solved_tickets=solved_tickets,
                            new_tickets=new_tickets,
                            on_hold_tickets=on_hold_tickets,
+                           all_tickets=all_tickets if stats and not error else [],
                            open_perc=open_perc,
                            pending_perc=pending_perc,
                            closed_perc=closed_perc,

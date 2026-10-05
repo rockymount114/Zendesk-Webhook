@@ -77,3 +77,22 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Added `.github/copilot-instructions.md` to document the repo's Flask/Zendesk architecture, setup commands, test entry points, linting commands, and project-specific auth/config conventions.
    - Included guidance derived from `README.md` and `CLAUDE.MD` so future Copilot sessions follow the existing Zendesk OAuth and deployment patterns.
    - Verified with `pytest -q` and confirmed the repo remains green (`24 passed`).
+
+11. Persist auto-refresh preference:
+   - Persisted the auto-refresh toggle for the recent tickets and open tickets pages in browser local storage.
+   - Restore the saved preference and restart the 60-second countdown after a page reload; it remains Off by default until enabled.
+
+12. Compact Rocky Mount dashboard design:
+   - Unified the Recent Tickets, KPI, and Open Tickets pages with a City of Rocky Mount service-desk header and consistent compact navigation.
+   - Replaced oversized translucent surfaces with a restrained light palette, denser ticket rows and tables, compact KPI tiles, and responsive filter controls.
+   - Added skip links, clearer focus states, filter labels for assistive technology, and reduced-motion handling.
+   - Authentication remains deferred pending a confirmed sign-in approach.
+
+13. Single-row KPI cards:
+   - Changed the KPI card grid to seven columns so all seven status/count cards align on one row.
+   - Kept a minimum card width and horizontal scrolling for narrow screens to avoid wrapping cards into additional rows.
+
+14. Interactive KPI ticket details:
+   - Made each KPI count keyboard-accessible as a button that opens and filters the ticket details table for its status; Total shows all tickets.
+   - Collected every Zendesk search result for the details view, including statuses without existing individual lists.
+   - Normalized Zendesk's `hold` status to the dashboard's `on-hold` bucket so displayed counts and detail filtering agree.

@@ -375,10 +375,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (autoRefreshToggle) {
-        autoRefreshToggle.checked = false; // Default: False
-        if (refreshCountdown) refreshCountdown.textContent = 'Off';
+        const autoRefreshEnabled = localStorage.getItem('zendesk.openTickets.autoRefresh') === 'true';
+        autoRefreshToggle.checked = autoRefreshEnabled;
+        if (autoRefreshEnabled) {
+            startAutoRefresh();
+        } else if (refreshCountdown) {
+            refreshCountdown.textContent = 'Off';
+        }
 
         autoRefreshToggle.addEventListener('change', function () {
+            localStorage.setItem('zendesk.openTickets.autoRefresh', String(this.checked));
             if (this.checked) {
                 startAutoRefresh();
             } else {

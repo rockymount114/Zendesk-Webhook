@@ -11,29 +11,34 @@
     <script src="{{ url_for('static', filename='script.js') }}?v={{ cache_buster }}"></script>
 </head>
 <body>
-    <!-- Auto-refresh indicator -->
-    <div id="refresh-indicator" class="refresh-indicator">
-        <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin: 0; user-select: none;">
-            <input type="checkbox" id="toggle-index-refresh"> Auto-refresh: <strong id="refresh-timer-label">Off</strong>
-        </label>
-    </div>
-    
+    <a class="skip-link" href="#main-content">Skip to ticket list</a>
     <div class="container">
-        <!-- Top Navigation -->
-        <nav class="nav-bar">
-            <a href="{{ url_for('index') }}" class="nav-link active">🎫 Recent Tickets</a>
-            <a href="{{ url_for('dashboard') }}" class="nav-link">📊 KPI Dashboard</a>
-            <a href="{{ url_for('open_tickets_page') }}" class="nav-link">📋 All Open Tickets</a>
-        </nav>
+        <header class="app-topbar">
+            <a class="brand-lockup" href="{{ url_for('index') }}" aria-label="City of Rocky Mount Service Desk home">
+                <span class="brand-monogram" aria-hidden="true">RM</span>
+                <span class="brand-copy"><strong>Rocky Mount</strong><small>Service desk</small></span>
+            </a>
+            <nav class="nav-bar" aria-label="Main navigation">
+                <a href="{{ url_for('index') }}" class="nav-link active" aria-current="page">Recent</a>
+                <a href="{{ url_for('dashboard') }}" class="nav-link">KPIs</a>
+                <a href="{{ url_for('open_tickets_page') }}" class="nav-link">Open tickets</a>
+            </nav>
+            <label class="refresh-control" title="Refresh this page every 60 seconds">
+                <input type="checkbox" id="toggle-index-refresh">
+                <span>Auto-refresh</span><strong id="refresh-timer-label">Off</strong>
+            </label>
+        </header>
 
-        <div class="header">
+        <main id="main-content">
+        <div class="header page-heading">
+            <div class="eyebrow">TICKET MONITOR</div>
             <h1>Zendesk Ticket Dashboard</h1>
-            <p>A real-time dashboard for monitoring Zendesk tickets</p>
+            <p>Recent activity across your service desk</p>
         </div>
 
         <!-- recent ticket section -->
         <div class="card tickets-card">
-            <h3><span class="icon">🎫</span>Recent 10 Tickets</h3>
+            <h3>Recent tickets <span class="section-count">{{ recent_tickets|length if recent_tickets else 0 }}</span></h3>
             {% if tickets_error %}
                 <div class="error-message">
                     <p><strong>⚠️ Error loading tickets:</strong></p>
@@ -46,7 +51,7 @@
                         <div class="ticket-header">
                             <div class="ticket-main-info">
                                 <span class="ticket-id">#{{ ticket.id }}</span>
-                                <a class="ticket-id" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank">></a>
+                                <a class="ticket-external-link" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" aria-label="Open ticket {{ ticket.id }} in Zendesk">↗</a>
                                 <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
                                 <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
                             </div>
@@ -84,8 +89,9 @@
         </div>
 
         <div class="footer-card">
-            <p>🔧 <strong>Zendesk Ticket Dashboard</strong> | Developed by X</p>
+            <p>City of Rocky Mount <span aria-hidden="true">·</span> Service desk</p>
         </div>
+        </main>
     </div>
 </body>
 </html>

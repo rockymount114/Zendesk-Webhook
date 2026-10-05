@@ -49,8 +49,14 @@ function stopAutoRefresh() {
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('toggle-index-refresh');
     if (toggle) {
-        toggle.checked = false; // Default: False
+        const autoRefreshEnabled = localStorage.getItem('zendesk.index.autoRefresh') === 'true';
+        toggle.checked = autoRefreshEnabled;
+        if (autoRefreshEnabled) {
+            startAutoRefresh();
+        }
+
         toggle.addEventListener('change', function () {
+            localStorage.setItem('zendesk.index.autoRefresh', String(this.checked));
             if (this.checked) {
                 startAutoRefresh();
             } else {
@@ -61,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Default indicator text
     const label = document.getElementById('refresh-timer-label');
-    if (label) label.textContent = 'Off';
+    if (label && (!toggle || !toggle.checked)) label.textContent = 'Off';
 });
 
 // Pause when page is hidden (if enabled)

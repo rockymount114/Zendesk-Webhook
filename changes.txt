@@ -72,3 +72,8 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Client-Side Pagination: Implemented responsive pagination in `templates/open_tickets.html` and `static/open_tickets.js` with configurable page sizes (25 default, 50, 100, All), dynamic page buttons with sliding window, record range indicator (`Showing X–Y of Z tickets`), and filter/sort-aware paging.
    - Auto-Refresh Default to False: Disabled automatic refresh by default on both `index.html` (`static/script.js`) and `open_tickets.html` (`static/open_tickets.js`). Replaced mandatory auto-reload with opt-in toggle controls with live countdowns when activated.
    - All 24 automated tests passing.
+
+10. Copilot repository guidance:
+   - Added `.github/copilot-instructions.md` to document the repo's Flask/Zendesk architecture, setup commands, test entry points, linting commands, and project-specific auth/config conventions.
+   - Included guidance derived from `README.md` and `CLAUDE.MD` so future Copilot sessions follow the existing Zendesk OAuth and deployment patterns.
+   - Verified with `pytest -q` and confirmed the repo remains green (`24 passed`).

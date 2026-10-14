@@ -178,6 +178,131 @@ document.addEventListener('DOMContentLoaded', function () {
         Chart.defaults.color = 'oklch(49% 0.025 250)';
         Chart.defaults.animation.duration = prefersReducedMotion ? 0 : 500;
 
+        // Plugin 1: Display total number at the end of each horizontal stacked bar on the right
+        const assigneeBarTotalsPlugin = {
+            id: 'assigneeBarTotals',
+            afterDatasetsDraw(chart) {
+                const { ctx, scales: { x } } = chart;
+                const meta0 = chart.getDatasetMeta(0);
+                if (!meta0 || !meta0.data || !meta0.data.length) return;
+
+                ctx.save();
+                ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = 'oklch(27% 0.025 250)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+
+                const barCount = meta0.data.length;
+                for (let i = 0; i < barCount; i++) {
+                    let total = 0;
+                    let maxX = x ? x.getPixelForValue(0) : 0;
+
+                    chart.data.datasets.forEach((dataset, dsIndex) => {
+                        const val = Number(dataset.data[i]) || 0;
+                        total += val;
+                        const meta = chart.getDatasetMeta(dsIndex);
+                        if (meta && meta.data && meta.data[i] && !meta.hidden) {
+                            if (meta.data[i].x > maxX) {
+                                maxX = meta.data[i].x;
+                            }
+                        }
+                    });
+
+                    if (meta0.data[i]) {
+                        const yPos = meta0.data[i].y;
+                        ctx.fillText(String(total), maxX + 7, yPos);
+                    }
+                }
+                ctx.restore();
+            }
+        };
+
+        // Plugin 2: Display ticket numbers directly on donut slices and center total
+        const donutLabelsPlugin = {
+            id: 'donutLabels',
+            beforeDraw(chart) {
+                const { ctx, chartArea } = chart;
+                if (!chartArea) return;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) return;
+                const arc0 = meta.data[0];
+                if (!arc0) return;
+
+                const centerX = arc0.x;
+                const centerY = arc0.y;
+                const total = chart.data.datasets[0].data.reduce((a, b) => a + Number(b || 0), 0);
+
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = 'oklch(49% 0.025 250)';
+                ctx.fillText('Total', centerX, centerY - 11);
+
+                ctx.font = '700 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = 'oklch(27% 0.025 250)';
+                ctx.fillText(String(total), centerX, centerY + 10);
+                ctx.restore();
+            },
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) return;
+
+                ctx.save();
+                ctx.font = '700 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+
+                meta.data.forEach((arc, i) => {
+                    const val = chart.data.datasets[0].data[i];
+                    if (!val || val <= 0) return;
+
+                    const arcSpan = arc.endAngle - arc.startAngle;
+                    if (arcSpan >= 0.26) {
+                        const angle = (arc.startAngle + arc.endAngle) / 2;
+                        const radius = (arc.innerRadius + arc.outerRadius) / 2;
+                        const x = arc.x + Math.cos(angle) * radius;
+                        const y = arc.y + Math.sin(angle) * radius;
+
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                        ctx.shadowBlur = 3;
+                        ctx.fillText(String(val), x, y);
+                        ctx.shadowBlur = 0;
+                    }
+                });
+                ctx.restore();
+            }
+        };
+
+        // Plugin 3: Display ticket numbers directly above line chart data points
+        const linePointLabelsPlugin = {
+            id: 'linePointLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) return;
+
+                const dataset = chart.data.datasets[0];
+                ctx.save();
+                ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#1d4ed8';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                meta.data.forEach((point, index) => {
+                    const val = dataset.data[index];
+                    if (val === undefined || val === null) return;
+                    if (val > 0 && typeof point.x === 'number' && typeof point.y === 'number') {
+                        ctx.fillText(String(val), point.x, point.y - 5);
+                    }
+                });
+                ctx.restore();
+            }
+        };
+
         // 1. Status Breakdown Donut Chart
         const statusCanvas = document.getElementById('statusChart');
         if (statusCanvas && chartData.status_distribution) {
@@ -197,6 +322,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         hoverOffset: 6
                     }]
                 },
+                plugins: [donutLabelsPlugin],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -210,7 +336,26 @@ document.addEventListener('DOMContentLoaded', function () {
                                 borderRadius: 3,
                                 usePointStyle: true,
                                 padding: 12,
-                                font: { size: 11, weight: '500' }
+                                font: { size: 11, weight: '500' },
+                                generateLabels: function (chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        const dataset = data.datasets[0];
+                                        return data.labels.map((label, i) => {
+                                            const val = dataset.data[i] || 0;
+                                            const meta = chart.getDatasetMeta(0);
+                                            return {
+                                                text: `${label} (${val})`,
+                                                fillStyle: dataset.backgroundColor[i] || '#94a3b8',
+                                                strokeStyle: '#ffffff',
+                                                lineWidth: 2,
+                                                hidden: isNaN(dataset.data[i]) || (meta.data[i] && meta.data[i].hidden),
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
                             }
                         },
                         tooltip: {
@@ -230,7 +375,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (elements.length > 0) {
                             const index = elements[0].index;
                             const clickedStatus = dist.statuses[index];
-                            // Match corresponding KPI button if available
                             const matchingBtn = document.querySelector(`.kpi-value-button[data-status="${clickedStatus}"]`);
                             filterByStatus(clickedStatus, matchingBtn);
                         }
@@ -276,14 +420,21 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     ]
                 },
+                plugins: [assigneeBarTotalsPlugin],
                 options: {
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            right: 32
+                        }
+                    },
                     scales: {
                         x: {
                             stacked: true,
                             beginAtZero: true,
+                            grace: '8%',
                             ticks: { precision: 0, font: { size: 11 } },
                             grid: { color: 'rgba(0, 0, 0, 0.05)' }
                         },
@@ -365,9 +516,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }]
                 },
+                plugins: [linePointLabelsPlugin],
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 18,
+                            right: 14,
+                            left: 6
+                        }
+                    },
                     scales: {
                         x: {
                             grid: { display: false },
@@ -380,6 +539,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         },
                         y: {
                             beginAtZero: true,
+                            grace: '10%',
                             ticks: { precision: 0, font: { size: 11 } },
                             grid: { color: 'rgba(0, 0, 0, 0.05)' }
                         }

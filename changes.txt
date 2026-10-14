@@ -104,8 +104,13 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
      * Top 10 Assignees Workload: active tickets ranked by count with stacked breakdown for New, Open, Pending, and On-hold.
      * Daily Ticket Volume Trend: timeline of ticket creations day-by-day across the reporting period.
    - Rendered modern, Apple-inspired charts using Chart.js (via CDN) with theme-aligned color tokens, smooth curves, area gradients, and accessible tooltips.
+   - Displayed direct ticket counts across all charts:
+     * Top 10 Assignees Bar Chart: Total active ticket count rendered at the right end of each horizontal stacked bar with layout padding and scale headroom.
+     * Status Donut/Pie Chart: Ticket numbers rendered directly on slice arcs, total count in donut center, and count formatted in the legend labels (`Open (14)`).
+     * Daily Volume Trend Line Chart: Ticket creation counts displayed directly above each day's data point with top grace padding.
    - Implemented interactive drill-down filtering in `static/dashboard.js`:
      * Clicking a Status Donut slice filters the details table to matching tickets.
      * Clicking an Assignee bar filters the details table to that assignee's active tickets.
      * Added "Show all" clear filter buttons in chart headers and `data-assignee` attributes to table rows.
    - Added comprehensive unit tests in `tests/test_app.py` for `build_chart_data()` edge cases (empty states, active ticket aggregation, top-10 limit) and route template assertions. All 28 tests passing.
+

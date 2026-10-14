@@ -1770,12 +1770,23 @@ select:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dashboard-charts-section,
+.dashboard-charts-section *,
+.dashboard-charts-section *::before,
+.dashboard-charts-section *::after {
+    box-sizing: border-box;
 }
 
 .charts-grid-row {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 @media (min-width: 960px) {
@@ -1793,6 +1804,7 @@ select:focus-visible {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    box-sizing: border-box;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1802,6 +1814,7 @@ select:focus-visible {
 
 .chart-card-full {
     width: 100%;
+    box-sizing: border-box;
 }
 
 .chart-card-header {

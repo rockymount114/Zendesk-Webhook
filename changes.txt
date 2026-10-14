@@ -121,3 +121,7 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Refactored `templates/index.html`, `templates/dashboard.html`, and `templates/open_tickets.html` to extend `base.html`, eliminating repetitive HTML boilerplate.
    - Updated `tests/test_app.py` with layout assertions validating topbar, footer, and active nav links across all routes. All 28 tests passing.
 
+17. Fix Daily Ticket Volume Trend Chart Alignment:
+   - Added `box-sizing: border-box` to `.dashboard-charts-section`, `.charts-grid-row`, `.chart-card`, and `.chart-card-full` in `static/style.css`.
+   - Resolved right-side overflow issue where `.chart-card-full` with `width: 100%` previously expanded by 38px (padding + borders) beyond `.charts-grid-row`, perfectly aligning the Daily Trend chart card with the Top 10 Assignees chart above it.
+

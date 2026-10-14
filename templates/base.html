@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>{% block title %}Zendesk Ticket Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ cache_buster }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#main-content">{% block skip_link_text %}Skip to main content{% endblock %}</a>
+    <div class="container">
+        {% include 'partials/header.html' %}
+
+        <main id="main-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        {% include 'partials/footer.html' %}
+    </div>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

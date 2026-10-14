@@ -1,179 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>All Open Tickets - Zendesk</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ cache_buster }}">
+{% extends "base.html" %}
+
+{% block title %}All Open Tickets - Zendesk{% endblock %}
+
+{% block extra_head %}
     <script src="{{ url_for('static', filename='open_tickets.js') }}?v={{ cache_buster }}" defer></script>
-</head>
-<body>
-    <a class="skip-link" href="#main-content">Skip to open tickets</a>
-    <div class="container">
-        <header class="app-topbar">
-            <a class="brand-lockup" href="{{ url_for('index') }}" aria-label="City of Rocky Mount Service Desk home">
-                <span class="brand-monogram" aria-hidden="true">RM</span>
-                <span class="brand-copy"><strong>Rocky Mount</strong><small>Service desk</small></span>
-            </a>
-            <nav class="nav-bar" aria-label="Main navigation">
-                <a href="{{ url_for('index') }}" class="nav-link">Recent</a>
-                <a href="{{ url_for('dashboard') }}" class="nav-link">KPIs</a>
-                <a href="{{ url_for('open_tickets_page') }}" class="nav-link active" aria-current="page">Open tickets</a>
-            </nav>
-            <span class="header-note"><span class="live-dot" aria-hidden="true"></span>Active queue</span>
-        </header>
+{% endblock %}
 
-        <main id="main-content">
-        <div class="header page-heading">
-            <div class="eyebrow">WORK QUEUE</div>
-            <h1>All Open Tickets</h1>
-            <p>Find and review active requests</p>
+{% block skip_link_text %}Skip to open tickets{% endblock %}
+
+{% block topbar_action %}
+<span class="header-note"><span class="live-dot" aria-hidden="true"></span>Active queue</span>
+{% endblock %}
+
+{% block content %}
+<div class="header page-heading">
+    <div class="eyebrow">WORK QUEUE</div>
+    <h1>All Open Tickets</h1>
+    <p>Find and review active requests</p>
+</div>
+
+{% if tickets_error %}
+<div class="error-message">
+    <strong>⚠️ Error loading open tickets:</strong> {{ tickets_error }}
+</div>
+{% endif %}
+
+<!-- Single-Line Filter Toolbar -->
+<div class="filter-toolbar">
+    <div class="filter-inputs-row">
+        <span class="filter-icon" title="Filter Tickets">🔍</span>
+        <input type="text" id="filter-id" class="filter-input-inline filter-id-input" placeholder="ID..." aria-label="Filter by ticket ID">
+        <input type="text" id="filter-subject" class="filter-input-inline filter-subject-input" placeholder="Subject keyword..." aria-label="Filter by subject">
+        <select id="filter-status" class="filter-input-inline filter-status-select">
+            <option value="all">All Statuses</option>
+            <option value="new">New</option>
+            <option value="open">Open</option>
+            <option value="pending">Pending</option>
+            <option value="on-hold">On-Hold</option>
+            <option value="hold">Hold</option>
+        </select>
+        <input type="text" id="filter-requester" class="filter-input-inline filter-user-input" list="requester-datalist" placeholder="Requester..." aria-label="Filter by requester">
+        <datalist id="requester-datalist">
+            {% for req in requesters %}
+            <option value="{{ req }}">
+            {% endfor %}
+        </datalist>
+        <input type="text" id="filter-assignee" class="filter-input-inline filter-user-input" list="assignee-datalist" placeholder="Assignee..." aria-label="Filter by assignee">
+        <datalist id="assignee-datalist">
+            {% for ass in assignees %}
+            <option value="{{ ass }}">
+            {% endfor %}
+        </datalist>
+        <div class="filter-date-group">
+            <input type="date" id="filter-start-date" class="filter-input-inline filter-date-input" title="Created From" aria-label="Created from">
+            <span class="date-sep">–</span>
+            <input type="date" id="filter-end-date" class="filter-input-inline filter-date-input" title="Created To" aria-label="Created to">
         </div>
-
-        {% if tickets_error %}
-        <div class="error-message">
-            <strong>⚠️ Error loading open tickets:</strong> {{ tickets_error }}
-        </div>
-        {% endif %}
-
-        <!-- Single-Line Filter Toolbar -->
-        <div class="filter-toolbar">
-            <div class="filter-inputs-row">
-                <span class="filter-icon" title="Filter Tickets">🔍</span>
-                <input type="text" id="filter-id" class="filter-input-inline filter-id-input" placeholder="ID..." aria-label="Filter by ticket ID">
-                <input type="text" id="filter-subject" class="filter-input-inline filter-subject-input" placeholder="Subject keyword..." aria-label="Filter by subject">
-                <select id="filter-status" class="filter-input-inline filter-status-select">
-                    <option value="all">All Statuses</option>
-                    <option value="new">New</option>
-                    <option value="open">Open</option>
-                    <option value="pending">Pending</option>
-                    <option value="on-hold">On-Hold</option>
-                    <option value="hold">Hold</option>
-                </select>
-                <input type="text" id="filter-requester" class="filter-input-inline filter-user-input" list="requester-datalist" placeholder="Requester..." aria-label="Filter by requester">
-                <datalist id="requester-datalist">
-                    {% for req in requesters %}
-                    <option value="{{ req }}">
-                    {% endfor %}
-                </datalist>
-                <input type="text" id="filter-assignee" class="filter-input-inline filter-user-input" list="assignee-datalist" placeholder="Assignee..." aria-label="Filter by assignee">
-                <datalist id="assignee-datalist">
-                    {% for ass in assignees %}
-                    <option value="{{ ass }}">
-                    {% endfor %}
-                </datalist>
-                <div class="filter-date-group">
-                    <input type="date" id="filter-start-date" class="filter-input-inline filter-date-input" title="Created From" aria-label="Created from">
-                    <span class="date-sep">–</span>
-                    <input type="date" id="filter-end-date" class="filter-input-inline filter-date-input" title="Created To" aria-label="Created to">
-                </div>
-            </div>
-
-            <div class="filter-actions-row">
-                <button type="button" id="btn-clear-filters" class="btn btn-secondary btn-sm" title="Clear all filters">Clear</button>
-                <button type="button" id="btn-export-csv" class="btn btn-primary btn-sm" title="Export filtered tickets to CSV">Export CSV</button>
-                <button type="button" id="btn-refresh" class="btn btn-secondary btn-sm" title="Refresh from Zendesk">Refresh</button>
-                <label class="auto-refresh-toggle-sm" title="Auto-refresh every 60 seconds">
-                    <input type="checkbox" id="toggle-auto-refresh">
-                    <span>Auto: <strong id="refresh-countdown">Off</strong></span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Tickets Table -->
-        <div class="table-responsive" id="table-container">
-            <table class="tickets-table">
-                <thead>
-                    <tr>
-                        <th class="sortable" data-col="id">ID <span class="sort-arrow">↕</span></th>
-                        <th class="sortable" data-col="subject">Subject <span class="sort-arrow">↕</span></th>
-                        <th class="sortable" data-col="requester">Requester <span class="sort-arrow">↕</span></th>
-                        <th class="sortable" data-col="assignee">Assignee <span class="sort-arrow">↕</span></th>
-                        <th class="sortable" data-col="status">Status <span class="sort-arrow">↕</span></th>
-                        <th class="sortable" data-col="priority">Priority <span class="sort-arrow">↕</span></th>
-                        <th class="sortable active-sort" data-col="date">Created At (EST) <span class="sort-arrow">▼</span></th>
-                        <th class="sortable" data-col="updated">Updated At (EST) <span class="sort-arrow">↕</span></th>
-                    </tr>
-                </thead>
-                <tbody id="tickets-tbody">
-                    {% if tickets %}
-                        {% for ticket in tickets %}
-                        <tr class="ticket-row"
-                            data-id="{{ ticket.id }}"
-                            data-subject="{{ ticket.subject|e }}"
-                            data-requester="{{ ticket.requester_name|e }}"
-                            data-assignee="{{ ticket.assignee_name|e }}"
-                            data-status="{{ ticket.status }}"
-                            data-priority="{{ ticket.priority or '' }}"
-                            data-date="{{ ticket.created_date }}"
-                            data-created-formatted="{{ ticket.created_at_formatted }}"
-                            data-updated-formatted="{{ ticket.updated_at_formatted }}"
-                            data-url="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}">
-                            <td>
-                                <a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" class="ticket-id-link">
-                                    #{{ ticket.id }} ↗
-                                </a>
-                            </td>
-                            <td>
-                                <div class="subject-cell" title="{{ ticket.description|e }}">
-                                    {{ ticket.subject_short or ticket.subject }}
-                                </div>
-                            </td>
-                            <td>{{ ticket.requester_name }}</td>
-                            <td>{{ ticket.assignee_name }}</td>
-                            <td>
-                                <span class="status-badge status-{{ ticket.status }}">{{ ticket.status }}</span>
-                            </td>
-                            <td>
-                                <span class="priority-badge priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
-                            </td>
-                            <td>{{ ticket.created_at_formatted }}</td>
-                            <td>{{ ticket.updated_at_formatted }}</td>
-                        </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr id="empty-state-row">
-                            <td colspan="8" class="empty-table-message">
-                                🎉 No open tickets found!
-                            </td>
-                        </tr>
-                    {% endif %}
-                    <tr id="no-results-row" style="display: none;">
-                        <td colspan="8" class="empty-table-message">
-                            🔍 No tickets match the selected filters. Click <strong>Clear Filters</strong> to reset.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination Bar -->
-        <div class="pagination-bar">
-            <div class="pagination-info">
-                <span id="ticket-counter"><span id="pagination-info-text">Showing 0 of 0 tickets</span></span>
-                <label class="page-size-selector">
-                    Show
-                    <select id="select-page-size" class="filter-input-sm">
-                        <option value="25" selected>25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                        <option value="all">All</option>
-                    </select>
-                    per page
-                </label>
-            </div>
-            <div class="pagination-controls" id="pagination-controls">
-                <!-- Dynamically populated by open_tickets.js -->
-            </div>
-        </div>
-
-        <div class="footer-card">
-            <p>City of Rocky Mount <span aria-hidden="true">·</span> Designed by XL</p>
-        </div>
-        </main>
     </div>
-</body>
-</html>
+
+    <div class="filter-actions-row">
+        <button type="button" id="btn-clear-filters" class="btn btn-secondary btn-sm" title="Clear all filters">Clear</button>
+        <button type="button" id="btn-export-csv" class="btn btn-primary btn-sm" title="Export filtered tickets to CSV">Export CSV</button>
+        <button type="button" id="btn-refresh" class="btn btn-secondary btn-sm" title="Refresh from Zendesk">Refresh</button>
+        <label class="auto-refresh-toggle-sm" title="Auto-refresh every 60 seconds">
+            <input type="checkbox" id="toggle-auto-refresh">
+            <span>Auto: <strong id="refresh-countdown">Off</strong></span>
+        </label>
+    </div>
+</div>
+
+<!-- Tickets Table -->
+<div class="table-responsive" id="table-container">
+    <table class="tickets-table">
+        <thead>
+            <tr>
+                <th class="sortable" data-col="id">ID <span class="sort-arrow">↕</span></th>
+                <th class="sortable" data-col="subject">Subject <span class="sort-arrow">↕</span></th>
+                <th class="sortable" data-col="requester">Requester <span class="sort-arrow">↕</span></th>
+                <th class="sortable" data-col="assignee">Assignee <span class="sort-arrow">↕</span></th>
+                <th class="sortable" data-col="status">Status <span class="sort-arrow">↕</span></th>
+                <th class="sortable" data-col="priority">Priority <span class="sort-arrow">↕</span></th>
+                <th class="sortable active-sort" data-col="date">Created At (EST) <span class="sort-arrow">▼</span></th>
+                <th class="sortable" data-col="updated">Updated At (EST) <span class="sort-arrow">↕</span></th>
+            </tr>
+        </thead>
+        <tbody id="tickets-tbody">
+            {% if tickets %}
+                {% for ticket in tickets %}
+                <tr class="ticket-row"
+                    data-id="{{ ticket.id }}"
+                    data-subject="{{ ticket.subject|e }}"
+                    data-requester="{{ ticket.requester_name|e }}"
+                    data-assignee="{{ ticket.assignee_name|e }}"
+                    data-status="{{ ticket.status }}"
+                    data-priority="{{ ticket.priority or '' }}"
+                    data-date="{{ ticket.created_date }}"
+                    data-created-formatted="{{ ticket.created_at_formatted }}"
+                    data-updated-formatted="{{ ticket.updated_at_formatted }}"
+                    data-url="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}">
+                    <td>
+                        <a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" class="ticket-id-link">
+                            #{{ ticket.id }} ↗
+                        </a>
+                    </td>
+                    <td>
+                        <div class="subject-cell" title="{{ ticket.description|e }}">
+                            {{ ticket.subject_short or ticket.subject }}
+                        </div>
+                    </td>
+                    <td>{{ ticket.requester_name }}</td>
+                    <td>{{ ticket.assignee_name }}</td>
+                    <td>
+                        <span class="status-badge status-{{ ticket.status }}">{{ ticket.status }}</span>
+                    </td>
+                    <td>
+                        <span class="priority-badge priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
+                    </td>
+                    <td>{{ ticket.created_at_formatted }}</td>
+                    <td>{{ ticket.updated_at_formatted }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr id="empty-state-row">
+                    <td colspan="8" class="empty-table-message">
+                        🎉 No open tickets found!
+                    </td>
+                </tr>
+            {% endif %}
+            <tr id="no-results-row" style="display: none;">
+                <td colspan="8" class="empty-table-message">
+                    🔍 No tickets match the selected filters. Click <strong>Clear Filters</strong> to reset.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination Bar -->
+<div class="pagination-bar">
+    <div class="pagination-info">
+        <span id="ticket-counter"><span id="pagination-info-text">Showing 0 of 0 tickets</span></span>
+        <label class="page-size-selector">
+            Show
+            <select id="select-page-size" class="filter-input-sm">
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="all">All</option>
+            </select>
+            per page
+        </label>
+    </div>
+    <div class="pagination-controls" id="pagination-controls">
+        <!-- Dynamically populated by open_tickets.js -->
+    </div>
+</div>
+{% endblock %}

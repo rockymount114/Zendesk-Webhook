@@ -114,3 +114,10 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
      * Added "Show all" clear filter buttons in chart headers and `data-assignee` attributes to table rows.
    - Added comprehensive unit tests in `tests/test_app.py` for `build_chart_data()` edge cases (empty states, active ticket aggregation, top-10 limit) and route template assertions. All 28 tests passing.
 
+16. Modular Template Layout Refactoring (base.html, partials/header.html, partials/footer.html):
+   - Created master `templates/base.html` layout unifying document structure, <head> tags, cache-buster links, skip links, main container, and script inclusion points.
+   - Extracted reusable topbar header into `templates/partials/header.html` featuring dynamic active navigation highlighting using `request.endpoint` and a `topbar_action` block for page-specific controls.
+   - Extracted reusable footer into `templates/partials/footer.html` standardizing the semantic `<footer class="footer-card">` across all pages.
+   - Refactored `templates/index.html`, `templates/dashboard.html`, and `templates/open_tickets.html` to extend `base.html`, eliminating repetitive HTML boilerplate.
+   - Updated `tests/test_app.py` with layout assertions validating topbar, footer, and active nav links across all routes. All 28 tests passing.
+

@@ -76,6 +76,11 @@ class TestAppRoutes:
         assert "Zendesk Ticket Dashboard" in content
         assert "4021" in content
         assert "Jane Doe" in content
+        assert "app-topbar" in content
+        assert "footer-card" in content
+        assert "Designed by XL" in content
+        assert 'nav-link active" aria-current="page">Recent' in content
+
 
     @patch("app.requests.get")
     def test_debug_api_route(self, mock_get, client):
@@ -163,6 +168,11 @@ class TestAppRoutes:
         assert b'id="trendChart"' in response.data
         assert b'id="chart-data"' in response.data
         assert b'data-assignee="Unassigned"' in response.data
+        assert b"app-topbar" in response.data
+        assert b"footer-card" in response.data
+        assert b"Designed by XL" in response.data
+        assert b'nav-link active" aria-current="page">KPIs' in response.data
+
 
 
     @patch("app.requests.get")
@@ -231,6 +241,11 @@ class TestAppRoutes:
         assert "Alice Cooper" in content
         assert "Bob Dylan" in content
         assert "ticket-counter" in content
+        assert "app-topbar" in content
+        assert "footer-card" in content
+        assert "Designed by XL" in content
+        assert 'nav-link active" aria-current="page">Open tickets' in content
+
 
     def test_open_tickets_page_unconfigured(self, monkeypatch, client):
         import app

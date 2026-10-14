@@ -1,97 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Zendesk Ticket Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ cache_buster }}">
+{% extends "base.html" %}
+
+{% block title %}Zendesk Ticket Dashboard{% endblock %}
+
+{% block extra_head %}
     <script src="{{ url_for('static', filename='script.js') }}?v={{ cache_buster }}"></script>
-</head>
-<body>
-    <a class="skip-link" href="#main-content">Skip to ticket list</a>
-    <div class="container">
-        <header class="app-topbar">
-            <a class="brand-lockup" href="{{ url_for('index') }}" aria-label="City of Rocky Mount Service Desk home">
-                <span class="brand-monogram" aria-hidden="true">RM</span>
-                <span class="brand-copy"><strong>Rocky Mount</strong><small>Service desk</small></span>
-            </a>
-            <nav class="nav-bar" aria-label="Main navigation">
-                <a href="{{ url_for('index') }}" class="nav-link active" aria-current="page">Recent</a>
-                <a href="{{ url_for('dashboard') }}" class="nav-link">KPIs</a>
-                <a href="{{ url_for('open_tickets_page') }}" class="nav-link">Open tickets</a>
-            </nav>
-            <label class="refresh-control" title="Refresh this page every 60 seconds">
-                <input type="checkbox" id="toggle-index-refresh">
-                <span>Auto-refresh</span><strong id="refresh-timer-label">Off</strong>
-            </label>
-        </header>
+{% endblock %}
 
-        <main id="main-content">
-        <div class="header page-heading">
-            <div class="eyebrow">TICKET MONITOR</div>
-            <h1>Zendesk Ticket Dashboard</h1>
-            <p>Recent activity across your service desk</p>
+{% block skip_link_text %}Skip to ticket list{% endblock %}
+
+{% block topbar_action %}
+<label class="refresh-control" title="Refresh this page every 60 seconds">
+    <input type="checkbox" id="toggle-index-refresh">
+    <span>Auto-refresh</span><strong id="refresh-timer-label">Off</strong>
+</label>
+{% endblock %}
+
+{% block content %}
+<div class="header page-heading">
+    <div class="eyebrow">TICKET MONITOR</div>
+    <h1>Zendesk Ticket Dashboard</h1>
+    <p>Recent activity across your service desk</p>
+</div>
+
+<!-- recent ticket section -->
+<div class="card tickets-card">
+    <h3>Recent tickets <span class="section-count">{{ recent_tickets|length if recent_tickets else 0 }}</span></h3>
+    {% if tickets_error %}
+        <div class="error-message">
+            <p><strong>⚠️ Error loading tickets:</strong></p>
+            <p>{{ tickets_error }}</p>
         </div>
-
-        <!-- recent ticket section -->
-        <div class="card tickets-card">
-            <h3>Recent tickets <span class="section-count">{{ recent_tickets|length if recent_tickets else 0 }}</span></h3>
-            {% if tickets_error %}
-                <div class="error-message">
-                    <p><strong>⚠️ Error loading tickets:</strong></p>
-                    <p>{{ tickets_error }}</p>
-                </div>
-            {% elif recent_tickets %}
-                <div class="tickets-list">
-                    {% for ticket in recent_tickets %}
-                    <div class="ticket-item">
-                        <div class="ticket-header">
-                            <div class="ticket-main-info">
-                                <span class="ticket-id">#{{ ticket.id }}</span>
-                                <a class="ticket-external-link" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" aria-label="Open ticket {{ ticket.id }} in Zendesk">↗</a>
-                                <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
-                                <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
-                            </div>
-                            <div class="ticket-dates">
-                                <span class="ticket-date">Created: {{ ticket.created_at_formatted }}</span>
-                                {% if ticket.updated_at_formatted %}
-                                <span class="ticket-date">Updated: {{ ticket.updated_at_formatted }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="ticket-subject">{{ ticket.subject_short }}</div>
-                        <div class="ticket-description">{{ ticket.description_short }}</div>
-                        <div class="ticket-people">
-                            <div class="ticket-person">
-                                <span class="person-label">Requester:</span>
-                                <span class="person-name">{{ ticket.requester_name }}</span>
-                            </div>
-                            <div class="ticket-person">
-                                <span class="person-label">Assignee:</span>
-                                <span class="person-name">{{ ticket.assignee_name }}</span>
-                            </div>
-                        </div>
+    {% elif recent_tickets %}
+        <div class="tickets-list">
+            {% for ticket in recent_tickets %}
+            <div class="ticket-item">
+                <div class="ticket-header">
+                    <div class="ticket-main-info">
+                        <span class="ticket-id">#{{ ticket.id }}</span>
+                        <a class="ticket-external-link" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" aria-label="Open ticket {{ ticket.id }} in Zendesk">↗</a>
+                        <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
+                        <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
                     </div>
-                    {% endfor %}
+                    <div class="ticket-dates">
+                        <span class="ticket-date">Created: {{ ticket.created_at_formatted }}</span>
+                        {% if ticket.updated_at_formatted %}
+                        <span class="ticket-date">Updated: {{ ticket.updated_at_formatted }}</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="tickets-footer">
-                    <small>Showing {{ recent_tickets|length }} of the most recent tickets</small>
+                <div class="ticket-subject">{{ ticket.subject_short }}</div>
+                <div class="ticket-description">{{ ticket.description_short }}</div>
+                <div class="ticket-people">
+                    <div class="ticket-person">
+                        <span class="person-label">Requester:</span>
+                        <span class="person-name">{{ ticket.requester_name }}</span>
+                    </div>
+                    <div class="ticket-person">
+                        <span class="person-label">Assignee:</span>
+                        <span class="person-name">{{ ticket.assignee_name }}</span>
+                    </div>
                 </div>
-            {% else %}
-                <div class="no-tickets">
-                    <p>🎉 No recent tickets found!</p>
-                    <p><small>This could mean no new tickets or configuration issues.</small></p>
-                </div>
-            {% endif %}
+            </div>
+            {% endfor %}
         </div>
-
-        <div class="footer-card">
-            <p>City of Rocky Mount <span aria-hidden="true">·</span> Designed by XL</p>
+        <div class="tickets-footer">
+            <small>Showing {{ recent_tickets|length }} of the most recent tickets</small>
         </div>
-        </main>
-    </div>
-</body>
-</html>
+    {% else %}
+        <div class="no-tickets">
+            <p>🎉 No recent tickets found!</p>
+            <p><small>This could mean no new tickets or configuration issues.</small></p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -158,6 +158,12 @@ class TestAppRoutes:
         assert b'data-status="open"' in response.data
         assert b"Test open ticket" in response.data
         assert b'data-status="all"' in response.data
+        assert b'id="statusChart"' in response.data
+        assert b'id="assigneeChart"' in response.data
+        assert b'id="trendChart"' in response.data
+        assert b'id="chart-data"' in response.data
+        assert b'data-assignee="Unassigned"' in response.data
+
 
     @patch("app.requests.get")
     def test_ticket_counts_collects_all_ticket_details_and_hold_status(self, mock_get):
@@ -236,3 +242,98 @@ class TestAppRoutes:
         assert response.status_code == 200
         content = response.data.decode("utf-8")
         assert "Zendesk not configured" in content
+
+
+class TestBuildChartData:
+    def test_build_chart_data_empty(self):
+        from app import build_chart_data
+
+        data = build_chart_data([], None)
+        assert data["has_data"] is False
+        assert data["status_distribution"]["counts"] == [0, 0, 0, 0, 0, 0]
+        assert data["assignees_workload"]["labels"] == []
+        assert data["daily_trends"]["labels"] == []
+
+    def test_build_chart_data_aggregation(self):
+        from app import build_chart_data
+
+        stats = {
+            "total": 3,
+            "open": 1,
+            "pending": 1,
+            "solved": 1,
+            "closed": 0,
+            "new": 0,
+            "on-hold": 0,
+        }
+        tickets = [
+            {
+                "id": 1,
+                "status": "open",
+                "assignee_name": "Bob Dylan",
+                "created_at": "2026-03-01T12:00:00Z",
+            },
+            {
+                "id": 2,
+                "status": "pending",
+                "assignee_name": "Bob Dylan",
+                "created_at": "2026-03-01T14:00:00Z",
+            },
+            {
+                "id": 3,
+                "status": "hold",  # should normalize to on-hold
+                "assignee_name": "Alice Cooper",
+                "created_at": "2026-03-02T10:00:00Z",
+            },
+            {
+                "id": 4,
+                "status": "solved",  # solved is not active, shouldn't add to assignee workload
+                "assignee_name": "Alice Cooper",
+                "created_at": "2026-03-02T11:00:00Z",
+            },
+        ]
+
+        chart_data = build_chart_data(tickets, stats, start_date="2026-03-01", end_date="2026-03-02")
+        assert chart_data["has_data"] is True
+
+        # Status distribution
+        assert chart_data["status_distribution"]["labels"] == ["Open", "Pending", "Solved", "Closed", "New", "On-hold"]
+        assert chart_data["status_distribution"]["counts"] == [1, 1, 1, 0, 0, 0]
+
+        # Assignee workload: Bob Dylan has 2 (1 open, 1 pending), Alice has 1 (1 on-hold)
+        workload = chart_data["assignees_workload"]
+        assert workload["labels"] == ["Bob Dylan", "Alice Cooper"]
+        assert workload["datasets"]["open"] == [1, 0]
+        assert workload["datasets"]["pending"] == [1, 0]
+        assert workload["datasets"]["on_hold"] == [0, 1]
+        assert workload["datasets"]["new"] == [0, 0]
+
+        # Daily trends: 2 on 2026-03-01, 2 on 2026-03-02
+        trends = chart_data["daily_trends"]
+        assert len(trends["labels"]) == 2
+        assert trends["counts"] == [2, 2]
+
+    def test_build_chart_data_assignee_top_10_limit(self):
+        from app import build_chart_data
+
+        stats = {"total": 12, "open": 12}
+        tickets = []
+        for i in range(12):
+            for _ in range(i + 1):  # Assignee 11 gets 12 tickets, Assignee 0 gets 1
+                tickets.append({
+                    "id": len(tickets) + 1,
+                    "status": "open",
+                    "assignee_name": f"Agent {i:02d}",
+                    "created_at": "2026-03-01T12:00:00Z",
+                })
+
+        chart_data = build_chart_data(tickets, stats, start_date="2026-03-01", end_date="2026-03-01")
+        workload = chart_data["assignees_workload"]
+        # Only top 10 assignees
+        assert len(workload["labels"]) == 10
+        # Agent 11 has the most (12), followed by Agent 10 (11), ..., Agent 02 (3)
+        assert workload["labels"][0] == "Agent 11"
+        assert workload["datasets"]["open"][0] == 12
+        assert workload["labels"][-1] == "Agent 02"
+        assert workload["datasets"]["open"][-1] == 3
+

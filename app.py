@@ -263,6 +263,124 @@ def get_ticket_counts(start_date: str, end_date: str):
 
     return total_stats, 200
 
+# ---------- Chart Data Helper ----------
+def build_chart_data(all_tickets, stats, start_date=None, end_date=None):
+    """Aggregate ticket data for dashboard charts: status distribution, top assignees workload, and daily trends."""
+    if not stats or not all_tickets:
+        return {
+            "has_data": False,
+            "status_distribution": {
+                "labels": ["Open", "Pending", "Solved", "Closed", "New", "On-hold"],
+                "counts": [0, 0, 0, 0, 0, 0],
+                "statuses": ["open", "pending", "solved", "closed", "new", "on-hold"],
+            },
+            "assignees_workload": {
+                "labels": [],
+                "datasets": {
+                    "new": [],
+                    "open": [],
+                    "pending": [],
+                    "on_hold": [],
+                },
+            },
+            "daily_trends": {
+                "labels": [],
+                "counts": [],
+                "full_dates": [],
+            },
+        }
+
+    status_order = [
+        ("Open", "open"),
+        ("Pending", "pending"),
+        ("Solved", "solved"),
+        ("Closed", "closed"),
+        ("New", "new"),
+        ("On-hold", "on-hold"),
+    ]
+    status_labels = [s[0] for s in status_order]
+    status_keys = [s[1] for s in status_order]
+    status_counts = [stats.get(s[1], 0) for s in status_order]
+
+    active_statuses = {"new", "open", "pending", "on-hold", "hold"}
+    assignee_map = {}
+    for t in all_tickets:
+        st = (t.get("status") or "").lower()
+        if st == "hold":
+            st = "on-hold"
+        if st in active_statuses:
+            ass_name = t.get("assignee_name") or "Unassigned"
+            if ass_name not in assignee_map:
+                assignee_map[ass_name] = {"new": 0, "open": 0, "pending": 0, "on-hold": 0, "total": 0}
+            assignee_map[ass_name][st] += 1
+            assignee_map[ass_name]["total"] += 1
+
+    sorted_assignees = sorted(assignee_map.items(), key=lambda item: item[1]["total"], reverse=True)[:10]
+    assignee_labels = [item[0] for item in sorted_assignees]
+    assignee_datasets = {
+        "new": [item[1]["new"] for item in sorted_assignees],
+        "open": [item[1]["open"] for item in sorted_assignees],
+        "pending": [item[1]["pending"] for item in sorted_assignees],
+        "on_hold": [item[1]["on-hold"] for item in sorted_assignees],
+    }
+
+    ny_tz = timezone(timedelta(hours=-4))
+    date_counts = {}
+
+    if start_date and end_date:
+        try:
+            s_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
+            e_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
+            if s_dt <= e_dt and (e_dt - s_dt).days <= 366:
+                curr = s_dt
+                while curr <= e_dt:
+                    date_counts[curr.strftime("%Y-%m-%d")] = 0
+                    curr += timedelta(days=1)
+        except Exception:
+            pass
+
+    for t in all_tickets:
+        created_raw = t.get("created_at")
+        if not created_raw:
+            continue
+        try:
+            dt = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
+            dt_ny = dt.astimezone(ny_tz)
+            date_key = dt_ny.strftime("%Y-%m-%d")
+        except Exception:
+            date_key = str(created_raw)[:10]
+
+        date_counts[date_key] = date_counts.get(date_key, 0) + 1
+
+    sorted_dates = sorted(date_counts.keys())
+    trend_labels = []
+    trend_counts = []
+    for d_str in sorted_dates:
+        try:
+            d_obj = datetime.strptime(d_str, "%Y-%m-%d")
+            trend_labels.append(d_obj.strftime("%b %d"))
+        except Exception:
+            trend_labels.append(d_str)
+        trend_counts.append(date_counts[d_str])
+
+    return {
+        "has_data": len(all_tickets) > 0,
+        "status_distribution": {
+            "labels": status_labels,
+            "counts": status_counts,
+            "statuses": status_keys,
+        },
+        "assignees_workload": {
+            "labels": assignee_labels,
+            "datasets": assignee_datasets,
+        },
+        "daily_trends": {
+            "labels": trend_labels,
+            "counts": trend_counts,
+            "full_dates": sorted_dates,
+        },
+    }
+
 # ---------- Dashboard route with cache buster ----------
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -295,6 +413,7 @@ def dashboard():
     elif status_code != 200:
         error = f"Zendesk API returned status {status_code}"
     
+    all_tickets = []
     if stats:
         total_count = stats.get('total', 0)
         if total_count > 0:
@@ -372,7 +491,10 @@ def dashboard():
 
                 ticket['requester_name'] = users_data.get(ticket.get('requester_id'), 'Unknown')
                 ticket['assignee_name'] = users_data.get(ticket.get('assignee_id'), 'Unassigned')
-            
+
+    tickets_for_display = all_tickets if stats and not error else []
+    chart_data = build_chart_data(tickets_for_display, stats if not error else None, start_date, end_date)
+
     return render_template('dashboard.html',
                            stats=stats,
                            error=error,
@@ -383,7 +505,8 @@ def dashboard():
                            solved_tickets=solved_tickets,
                            new_tickets=new_tickets,
                            on_hold_tickets=on_hold_tickets,
-                           all_tickets=all_tickets if stats and not error else [],
+                           all_tickets=tickets_for_display,
+                           chart_data=chart_data,
                            open_perc=open_perc,
                            pending_perc=pending_perc,
                            closed_perc=closed_perc,

@@ -96,3 +96,16 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Made each KPI count keyboard-accessible as a button that opens and filters the ticket details table for its status; Total shows all tickets.
    - Collected every Zendesk search result for the details view, including statuses without existing individual lists.
    - Normalized Zendesk's `hold` status to the dashboard's `on-hold` bucket so displayed counts and detail filtering agree.
+
+15. Dashboard Visual Analytics Charts:
+   - Implemented a 3-chart analytics suite directly below the KPI metric cards and above the ticket details table on `templates/dashboard.html`.
+   - Added `build_chart_data()` in `app.py` aggregating ticket datasets within the selected reporting period:
+     * Status Breakdown: distribution across Open, Pending, Solved, Closed, New, and On-hold.
+     * Top 10 Assignees Workload: active tickets ranked by count with stacked breakdown for New, Open, Pending, and On-hold.
+     * Daily Ticket Volume Trend: timeline of ticket creations day-by-day across the reporting period.
+   - Rendered modern, Apple-inspired charts using Chart.js (via CDN) with theme-aligned color tokens, smooth curves, area gradients, and accessible tooltips.
+   - Implemented interactive drill-down filtering in `static/dashboard.js`:
+     * Clicking a Status Donut slice filters the details table to matching tickets.
+     * Clicking an Assignee bar filters the details table to that assignee's active tickets.
+     * Added "Show all" clear filter buttons in chart headers and `data-assignee` attributes to table rows.
+   - Added comprehensive unit tests in `tests/test_app.py` for `build_chart_data()` edge cases (empty states, active ticket aggregation, top-10 limit) and route template assertions. All 28 tests passing.

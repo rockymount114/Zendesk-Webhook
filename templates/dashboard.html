@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Zendesk KPIs - Rocky Mount Service Desk</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ cache_buster }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body class="dashboard-page">
 <a class="skip-link" href="#main-content">Skip to KPI results</a>
@@ -102,6 +103,61 @@
   </div>
   
 </section>
+
+<section class="dashboard-charts-section" aria-label="Ticket analytics charts">
+  <div class="charts-grid-row">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title-group">
+          <h2 class="chart-title">Status Breakdown</h2>
+          <span class="chart-subtitle">Distribution of tickets by status</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm chart-reset-filter" id="reset-status-filter" hidden title="Clear status filter">Show all</button>
+      </div>
+      <div class="chart-container chart-container-donut">
+        {% if chart_data and chart_data.has_data %}
+        <canvas id="statusChart" aria-label="Donut chart showing ticket status breakdown" role="img"></canvas>
+        {% else %}
+        <div class="chart-empty-placeholder">No ticket data available for status distribution.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title-group">
+          <h2 class="chart-title">Top 10 Assignees</h2>
+          <span class="chart-subtitle">Active ticket workload (New, Open, Pending, On-hold)</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm chart-reset-filter" id="reset-assignee-filter" hidden title="Clear assignee filter">Show all</button>
+      </div>
+      <div class="chart-container chart-container-bar">
+        {% if chart_data and chart_data.assignees_workload and chart_data.assignees_workload.labels %}
+        <canvas id="assigneeChart" aria-label="Stacked horizontal bar chart of top 10 assignees by active tickets" role="img"></canvas>
+        {% else %}
+        <div class="chart-empty-placeholder">No active tickets assigned in this reporting period.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card chart-card-full">
+    <div class="chart-card-header">
+      <div class="chart-title-group">
+        <h2 class="chart-title">Daily Ticket Volume Trend</h2>
+        <span class="chart-subtitle">Number of tickets created each day in the selected period</span>
+      </div>
+    </div>
+    <div class="chart-container chart-container-trend">
+      {% if chart_data and chart_data.daily_trends and chart_data.daily_trends.labels %}
+      <canvas id="trendChart" aria-label="Smooth area trend chart showing daily ticket creation volume" role="img"></canvas>
+      {% else %}
+      <div class="chart-empty-placeholder">No ticket creation trend data available.</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
 <section id="ticket-details" class="dashboard-ticket-section" aria-labelledby="ticket-details-title" hidden>
   <h2 id="ticket-details-title" tabindex="-1">
     <span><span id="ticket-details-label">Ticket details</span><span id="ticket-details-count" class="section-count"></span></span>
@@ -123,7 +179,7 @@
       </thead>
       <tbody id="ticket-details-body">
         {% for ticket in all_tickets %}
-        <tr data-status="{{ 'on-hold' if ticket.status|default('')|lower == 'hold' else ticket.status|default('unknown')|lower|e }}">
+        <tr data-status="{{ 'on-hold' if ticket.status|default('')|lower == 'hold' else ticket.status|default('unknown')|lower|e }}" data-assignee="{{ ticket.assignee_name|default('Unassigned')|e }}">
           <td><a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer">{{ ticket.id }}</a></td>
           <td title="{{ ticket.description|default('')|e }}">{{ ticket.subject_short|default(ticket.subject|default('No subject')) }}</td>
           <td>{{ ticket.requester_name|default('Unknown') }}</td>
@@ -146,6 +202,7 @@
 </main>
 <footer class="footer-card"><p>City of Rocky Mount <span aria-hidden="true">·</span> Service desk</p></footer>
 </div>
+<script id="chart-data" type="application/json">{{ chart_data|tojson }}</script>
 <script src="{{ url_for('static', filename='dashboard.js') }}?v={{ cache_buster }}" defer></script>
 </body>
 </html>

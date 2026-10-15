@@ -173,9 +173,38 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function getChartThemeColors() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            return {
+                isDark: isDark,
+                textPrimary: isDark ? '#f1f5f9' : 'oklch(27% 0.025 250)',
+                textMuted: isDark ? '#94a3b8' : 'oklch(49% 0.025 250)',
+                gridColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                surfaceBorder: isDark ? '#1a202c' : '#ffffff',
+                trendStroke: isDark ? '#3b82f6' : '#2563eb',
+                statusColors: isDark ? {
+                    open: '#fb923c',
+                    pending: '#fbbf24',
+                    solved: '#34d399',
+                    closed: '#94a3b8',
+                    new: '#a78bfa',
+                    'on-hold': '#22d3ee'
+                } : {
+                    open: '#ea580c',
+                    pending: '#d97706',
+                    solved: '#059669',
+                    closed: '#64748b',
+                    new: '#7c3aed',
+                    'on-hold': '#0891b2'
+                }
+            };
+        }
+
+        const initialTheme = getChartThemeColors();
         Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
         Chart.defaults.font.size = 12;
-        Chart.defaults.color = 'oklch(49% 0.025 250)';
+        Chart.defaults.color = initialTheme.textMuted;
         Chart.defaults.animation.duration = prefersReducedMotion ? 0 : 500;
 
         // Plugin 1: Display total number at the end of each horizontal stacked bar on the right
@@ -186,9 +215,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const meta0 = chart.getDatasetMeta(0);
                 if (!meta0 || !meta0.data || !meta0.data.length) return;
 
+                const curTheme = getChartThemeColors();
                 ctx.save();
                 ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = 'oklch(27% 0.025 250)';
+                ctx.fillStyle = curTheme.textPrimary;
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
 
@@ -231,17 +261,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 const centerX = arc0.x;
                 const centerY = arc0.y;
                 const total = chart.data.datasets[0].data.reduce((a, b) => a + Number(b || 0), 0);
+                const curTheme = getChartThemeColors();
 
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
                 ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = 'oklch(49% 0.025 250)';
+                ctx.fillStyle = curTheme.textMuted;
                 ctx.fillText('Total', centerX, centerY - 11);
 
                 ctx.font = '700 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = 'oklch(27% 0.025 250)';
+                ctx.fillStyle = curTheme.textPrimary;
                 ctx.fillText(String(total), centerX, centerY + 10);
                 ctx.restore();
             },
@@ -267,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const x = arc.x + Math.cos(angle) * radius;
                         const y = arc.y + Math.sin(angle) * radius;
 
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
                         ctx.shadowBlur = 3;
                         ctx.fillText(String(val), x, y);
                         ctx.shadowBlur = 0;
@@ -286,9 +317,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!meta || !meta.data || !meta.data.length) return;
 
                 const dataset = chart.data.datasets[0];
+                const curTheme = getChartThemeColors();
                 ctx.save();
                 ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = '#1d4ed8';
+                ctx.fillStyle = curTheme.trendStroke;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
 
@@ -303,14 +335,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
 
+        let statusChart = null;
+        let assigneeChart = null;
+        let trendChart = null;
+
         // 1. Status Breakdown Donut Chart
         const statusCanvas = document.getElementById('statusChart');
         if (statusCanvas && chartData.status_distribution) {
             const dist = chartData.status_distribution;
-            const bgColors = dist.statuses.map(st => statusColors[st] || '#94a3b8');
+            const bgColors = dist.statuses.map(st => initialTheme.statusColors[st] || '#94a3b8');
             const totalStatusTickets = dist.counts.reduce((a, b) => a + b, 0);
 
-            new Chart(statusCanvas, {
+            statusChart = new Chart(statusCanvas, {
                 type: 'doughnut',
                 data: {
                     labels: dist.labels,
@@ -318,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         data: dist.counts,
                         backgroundColor: bgColors,
                         borderWidth: 2,
-                        borderColor: '#ffffff',
+                        borderColor: initialTheme.surfaceBorder,
                         hoverOffset: 6
                     }]
                 },
@@ -331,6 +367,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         legend: {
                             position: 'bottom',
                             labels: {
+                                color: initialTheme.textMuted,
                                 boxWidth: 12,
                                 boxHeight: 12,
                                 borderRadius: 3,
@@ -339,6 +376,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 font: { size: 11, weight: '500' },
                                 generateLabels: function (chart) {
                                     const data = chart.data;
+                                    const curTheme = getChartThemeColors();
                                     if (data.labels.length && data.datasets.length) {
                                         const dataset = data.datasets[0];
                                         return data.labels.map((label, i) => {
@@ -347,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                             return {
                                                 text: `${label} (${val})`,
                                                 fillStyle: dataset.backgroundColor[i] || '#94a3b8',
-                                                strokeStyle: '#ffffff',
+                                                strokeStyle: curTheme.surfaceBorder,
                                                 lineWidth: 2,
                                                 hidden: isNaN(dataset.data[i]) || (meta.data[i] && meta.data[i].hidden),
                                                 index: i
@@ -389,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const workload = chartData.assignees_workload;
             const ds = workload.datasets;
 
-            new Chart(assigneeCanvas, {
+            assigneeChart = new Chart(assigneeCanvas, {
                 type: 'bar',
                 data: {
                     labels: workload.labels,
@@ -397,25 +435,25 @@ document.addEventListener('DOMContentLoaded', function () {
                         {
                             label: 'New',
                             data: ds.new,
-                            backgroundColor: statusColors.new,
+                            backgroundColor: initialTheme.statusColors.new,
                             borderRadius: 2
                         },
                         {
                             label: 'Open',
                             data: ds.open,
-                            backgroundColor: statusColors.open,
+                            backgroundColor: initialTheme.statusColors.open,
                             borderRadius: 2
                         },
                         {
                             label: 'Pending',
                             data: ds.pending,
-                            backgroundColor: statusColors.pending,
+                            backgroundColor: initialTheme.statusColors.pending,
                             borderRadius: 2
                         },
                         {
                             label: 'On-hold',
                             data: ds.on_hold,
-                            backgroundColor: statusColors['on-hold'],
+                            backgroundColor: initialTheme.statusColors['on-hold'],
                             borderRadius: 2
                         }
                     ]
@@ -435,13 +473,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             stacked: true,
                             beginAtZero: true,
                             grace: '8%',
-                            ticks: { precision: 0, font: { size: 11 } },
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                            ticks: { precision: 0, font: { size: 11 }, color: initialTheme.textMuted },
+                            grid: { color: initialTheme.gridColor }
                         },
                         y: {
                             stacked: true,
                             ticks: {
                                 font: { size: 11, weight: '500' },
+                                color: initialTheme.textPrimary,
                                 callback: function (val) {
                                     const label = this.getLabelForValue(val);
                                     return label.length > 18 ? label.substring(0, 16) + '...' : label;
@@ -454,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         legend: {
                             position: 'bottom',
                             labels: {
+                                color: initialTheme.textMuted,
                                 boxWidth: 10,
                                 boxHeight: 10,
                                 borderRadius: 2,
@@ -489,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (trendCanvas && chartData.daily_trends && chartData.daily_trends.labels.length > 0) {
             const trends = chartData.daily_trends;
 
-            new Chart(trendCanvas, {
+            trendChart = new Chart(trendCanvas, {
                 type: 'line',
                 data: {
                     labels: trends.labels,
@@ -498,20 +538,21 @@ document.addEventListener('DOMContentLoaded', function () {
                         data: trends.counts,
                         tension: 0.35,
                         fill: true,
-                        borderColor: '#2563eb',
+                        borderColor: initialTheme.trendStroke,
                         borderWidth: 2,
-                        pointBackgroundColor: '#2563eb',
+                        pointBackgroundColor: initialTheme.trendStroke,
                         pointHoverRadius: 6,
                         pointRadius: trends.labels.length > 45 ? 0 : (trends.labels.length > 20 ? 2 : 3),
                         backgroundColor: function (context) {
                             const chart = context.chart;
                             const { ctx, chartArea } = chart;
+                            const curTheme = getChartThemeColors();
                             if (!chartArea) {
-                                return 'rgba(37, 99, 235, 0.12)';
+                                return curTheme.isDark ? 'rgba(59, 130, 246, 0.18)' : 'rgba(37, 99, 235, 0.12)';
                             }
                             const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                            gradient.addColorStop(0, 'rgba(37, 99, 235, 0.28)');
-                            gradient.addColorStop(1, 'rgba(37, 99, 235, 0.01)');
+                            gradient.addColorStop(0, curTheme.isDark ? 'rgba(59, 130, 246, 0.35)' : 'rgba(37, 99, 235, 0.28)');
+                            gradient.addColorStop(1, curTheme.isDark ? 'rgba(59, 130, 246, 0.01)' : 'rgba(37, 99, 235, 0.01)');
                             return gradient;
                         }
                     }]
@@ -534,14 +575,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                 maxRotation: 0,
                                 autoSkip: true,
                                 maxTicksLimit: 14,
-                                font: { size: 11 }
+                                font: { size: 11 },
+                                color: initialTheme.textMuted
                             }
                         },
                         y: {
                             beginAtZero: true,
                             grace: '10%',
-                            ticks: { precision: 0, font: { size: 11 } },
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                            ticks: { precision: 0, font: { size: 11 }, color: initialTheme.textMuted },
+                            grid: { color: initialTheme.gridColor }
                         }
                     },
                     plugins: {
@@ -563,5 +605,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
+
+        // Real-time synchronization when theme changes
+        window.addEventListener('app-theme-changed', function () {
+            const theme = getChartThemeColors();
+            Chart.defaults.color = theme.textMuted;
+
+            if (statusChart && chartData.status_distribution) {
+                statusChart.data.datasets[0].borderColor = theme.surfaceBorder;
+                statusChart.data.datasets[0].backgroundColor = chartData.status_distribution.statuses.map(st => theme.statusColors[st] || '#94a3b8');
+                if (statusChart.options.plugins && statusChart.options.plugins.legend) {
+                    statusChart.options.plugins.legend.labels.color = theme.textMuted;
+                }
+                statusChart.update();
+            }
+
+            if (assigneeChart) {
+                if (assigneeChart.data.datasets[0]) assigneeChart.data.datasets[0].backgroundColor = theme.statusColors.new;
+                if (assigneeChart.data.datasets[1]) assigneeChart.data.datasets[1].backgroundColor = theme.statusColors.open;
+                if (assigneeChart.data.datasets[2]) assigneeChart.data.datasets[2].backgroundColor = theme.statusColors.pending;
+                if (assigneeChart.data.datasets[3]) assigneeChart.data.datasets[3].backgroundColor = theme.statusColors['on-hold'];
+                if (assigneeChart.options.scales && assigneeChart.options.scales.x) {
+                    assigneeChart.options.scales.x.grid.color = theme.gridColor;
+                    assigneeChart.options.scales.x.ticks.color = theme.textMuted;
+                }
+                if (assigneeChart.options.scales && assigneeChart.options.scales.y) {
+                    assigneeChart.options.scales.y.ticks.color = theme.textPrimary;
+                }
+                if (assigneeChart.options.plugins && assigneeChart.options.plugins.legend) {
+                    assigneeChart.options.plugins.legend.labels.color = theme.textMuted;
+                }
+                assigneeChart.update();
+            }
+
+            if (trendChart) {
+                trendChart.data.datasets[0].borderColor = theme.trendStroke;
+                trendChart.data.datasets[0].pointBackgroundColor = theme.trendStroke;
+                if (trendChart.options.scales && trendChart.options.scales.x) {
+                    trendChart.options.scales.x.ticks.color = theme.textMuted;
+                }
+                if (trendChart.options.scales && trendChart.options.scales.y) {
+                    trendChart.options.scales.y.grid.color = theme.gridColor;
+                    trendChart.options.scales.y.ticks.color = theme.textMuted;
+                }
+                trendChart.update();
+            }
+        });
     }
 });

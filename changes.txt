@@ -164,3 +164,25 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
 
 
 
+21. Multi-Color Schema (Light, Dark, Auto) & User-Friendly Table & Chart Enhancements:
+   - Designed and implemented a multi-color theme system supporting Light, Dark, and Auto (system preference) modes.
+   - Built `static/theme.js` to manage theme switching, localStorage persistence (`theme`), dynamic OS theme change detection (`window.matchMedia('(prefers-color-scheme: dark)')`), UI button states (`role="radiogroup"` / `aria-checked`), and custom event dispatching (`app-theme-changed`).
+   - Implemented a Zero-FOUC (Flash of Unstyled Content) initialization inline script in `<head>` of `templates/base.html` that immediately sets `data-theme`, `data-theme-setting`, and `colorScheme` on `<html>` before stylesheet evaluation.
+   - Added a compact 3-state segmented theme switcher (☀️ Light / 🌙 Dark / 💻 Auto) inside `<div class="topbar-actions">` in `templates/base.html`, with responsive styling that collapses text labels to icons on mobile screens.
+   - Expanded `static/style.css` with OKLCH-based theme tokens for both `:root, [data-theme="light"]` and `[data-theme="dark"]`:
+     * Deep charcoal background (`oklch(18% 0.02 250)`), elevated frosted surfaces (`oklch(23% 0.022 250)` and `oklch(27% 0.025 250)`), subtle translucent borders, and luminous civic blue accents (`oklch(68% 0.14 249)`).
+     * Native form control theming with `color-scheme: dark` / `color-scheme: light` ensuring browser date-pickers, select dropdowns, and scrollbars render in native dark mode.
+     * Controlled `.theme-transitioning` class to provide fluid 200ms transitions on manual toggle without animating on initial page load.
+   - Enhanced Table displays across `templates/open_tickets.html` and `templates/dashboard.html`:
+     * Added sticky table headers with frosted glass backdrop (`backdrop-filter: blur(12px)`) pinned during scrolling.
+     * Implemented alternating zebra striping (`tbody tr:nth-child(even) td`) for improved scanning across wide multi-column ticket tables.
+     * Refined table row hover states (`var(--surface-hover)`), border separators, and monospace tabular numeric alignment.
+     * Upgraded status and priority badges: soft tinted backgrounds in light mode, and translucent pills with luminous, WCAG AAA-compliant text in dark mode.
+   - Dynamically Themed Chart.js Visuals in `static/dashboard.js`:
+     * Added `getChartThemeColors()` helper calibrating status colors for light and dark surfaces (e.g. vibrant luminous orange, amber, emerald, cyan, violet in dark mode).
+     * Synchronized axes ticks, gridlines (`rgba(255,255,255,0.08)` in dark vs `rgba(0,0,0,0.05)` in light), donut borders, legend labels, and tooltip styling.
+     * Updated `donutLabelsPlugin`, `assigneeBarTotalsPlugin`, and `linePointLabelsPlugin` to dynamically draw canvas text and shadows matching the active theme.
+     * Registered an `app-theme-changed` window event listener that re-renders all Chart.js instances in place without full page reload.
+   - Themed Ticket Preview Drawer (`templates/partials/ticket_drawer.html`):
+     * Theme-aware drawer surface, backdrop overlay, navigation buttons, metadata grid, and comment timeline cards.
+   - Added unit tests in `tests/test_app.py` validating the Zero-FOUC script, theme switcher markup, and static asset accessibility. All 30 automated tests passing.

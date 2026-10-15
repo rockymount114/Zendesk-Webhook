@@ -7,6 +7,18 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>{% block title %}Zendesk Ticket Dashboard{% endblock %}</title>
+    <script>
+        (function() {
+            try {
+                var saved = localStorage.getItem('theme') || 'auto';
+                var isDark = saved === 'dark' || (saved !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                var resolved = isDark ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', resolved);
+                document.documentElement.setAttribute('data-theme-setting', saved);
+                document.documentElement.style.colorScheme = resolved;
+            } catch (e) {}
+        })();
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ cache_buster }}">
     {% block extra_head %}{% endblock %}
 </head>
@@ -23,7 +35,23 @@
                 <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" {% if request.endpoint == 'dashboard' %}aria-current="page"{% endif %}>KPIs</a>
                 <a href="{{ url_for('open_tickets_page') }}" class="nav-link {% if request.endpoint == 'open_tickets_page' %}active{% endif %}" {% if request.endpoint == 'open_tickets_page' %}aria-current="page"{% endif %}>Open tickets</a>
             </nav>
-            {% block topbar_action %}{% endblock %}
+            <div class="topbar-actions">
+                {% block topbar_action %}{% endblock %}
+                <div class="theme-switch-group" role="radiogroup" aria-label="Theme selector">
+                    <button type="button" class="theme-btn" data-theme-value="light" role="radio" aria-checked="false" title="Light mode" aria-label="Light mode">
+                        <svg class="theme-icon" viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+                        <span class="theme-btn-label">Light</span>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="dark" role="radio" aria-checked="false" title="Dark mode" aria-label="Dark mode">
+                        <svg class="theme-icon" viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+                        <span class="theme-btn-label">Dark</span>
+                    </button>
+                    <button type="button" class="theme-btn" data-theme-value="auto" role="radio" aria-checked="false" title="System auto mode" aria-label="System auto mode">
+                        <svg class="theme-icon" viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm2 0h10v8H5V5z" clip-rule="evenodd"/></svg>
+                        <span class="theme-btn-label">Auto</span>
+                    </button>
+                </div>
+            </div>
         </header>
 
         <main id="main-content">
@@ -35,6 +63,7 @@
 
     {% include 'partials/ticket_drawer.html' %}
 
+    <script src="{{ url_for('static', filename='theme.js') }}?v={{ cache_buster }}" defer></script>
     <script src="{{ url_for('static', filename='ticket_preview.js') }}?v={{ cache_buster }}" defer></script>
     {% block extra_scripts %}{% endblock %}
 </body>

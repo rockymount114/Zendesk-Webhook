@@ -382,3 +382,38 @@ class TestBuildChartData:
         assert workload["labels"][-1] == "Agent 02"
         assert workload["datasets"]["open"][-1] == 3
 
+
+class TestThemeSupport:
+    @patch("app.requests.get")
+    def test_theme_switcher_rendered_in_pages(self, mock_get, client):
+        mock_tickets_resp = MagicMock()
+        mock_tickets_resp.status_code = 200
+        mock_tickets_resp.json.return_value = {"tickets": []}
+        mock_get.return_value = mock_tickets_resp
+
+        response = client.get("/")
+        assert response.status_code == 200
+        html = response.data.decode("utf-8")
+
+        # Zero-FOUC script
+        assert "data-theme" in html
+        assert "localStorage.getItem('theme')" in html
+
+        # Theme switcher control and options
+        assert "theme-switch-group" in html
+        assert 'data-theme-value="light"' in html
+        assert 'data-theme-value="dark"' in html
+        assert 'data-theme-value="auto"' in html
+
+        # Theme management script
+        assert "theme.js" in html
+
+    def test_theme_static_asset(self, client):
+        response = client.get("/static/theme.js")
+        assert response.status_code == 200
+        js = response.data.decode("utf-8")
+        assert "app-theme-changed" in js
+        assert "ThemeManager" in js
+        assert "prefers-color-scheme" in js
+
+

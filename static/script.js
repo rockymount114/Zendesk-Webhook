@@ -5,13 +5,17 @@ let secondsLeft = 60;
 let isAutoRefreshEnabled = false;
 
 function updateCountdown() {
-    const label = document.getElementById('refresh-timer-label');
-    if (label && isAutoRefreshEnabled) {
-        label.textContent = `${secondsLeft}s`;
+    const labels = document.querySelectorAll('.refresh-timer-label, #refresh-timer-label');
+    if (isAutoRefreshEnabled) {
+        labels.forEach(label => {
+            label.textContent = `${secondsLeft}s`;
+        });
         secondsLeft--;
 
         if (secondsLeft < 0) {
-            label.textContent = 'Refreshing...';
+            labels.forEach(label => {
+                label.textContent = 'Refreshing...';
+            });
             setTimeout(() => {
                 window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
             }, 500);
@@ -31,8 +35,10 @@ function startAutoRefresh() {
         window.location.href = window.location.href.split('?')[0] + '?t=' + new Date().getTime();
     }, 60000);
 
-    const label = document.getElementById('refresh-timer-label');
-    if (label) label.textContent = '60s';
+    const labels = document.querySelectorAll('.refresh-timer-label, #refresh-timer-label');
+    labels.forEach(label => {
+        label.textContent = '60s';
+    });
 }
 
 function stopAutoRefresh() {
@@ -42,32 +48,44 @@ function stopAutoRefresh() {
     refreshInterval = null;
     countdownInterval = null;
 
-    const label = document.getElementById('refresh-timer-label');
-    if (label) label.textContent = 'Off';
+    const labels = document.querySelectorAll('.refresh-timer-label, #refresh-timer-label');
+    labels.forEach(label => {
+        label.textContent = 'Off';
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    const toggle = document.getElementById('toggle-index-refresh');
-    if (toggle) {
+    const toggles = document.querySelectorAll('.toggle-index-refresh, #toggle-index-refresh');
+    if (toggles.length > 0) {
         const autoRefreshEnabled = localStorage.getItem('zendesk.index.autoRefresh') === 'true';
-        toggle.checked = autoRefreshEnabled;
+        toggles.forEach(t => {
+            t.checked = autoRefreshEnabled;
+        });
+
         if (autoRefreshEnabled) {
             startAutoRefresh();
+        } else {
+            const labels = document.querySelectorAll('.refresh-timer-label, #refresh-timer-label');
+            labels.forEach(label => {
+                label.textContent = 'Off';
+            });
         }
 
-        toggle.addEventListener('change', function () {
-            localStorage.setItem('zendesk.index.autoRefresh', String(this.checked));
-            if (this.checked) {
-                startAutoRefresh();
-            } else {
-                stopAutoRefresh();
-            }
+        toggles.forEach(toggle => {
+            toggle.addEventListener('change', function () {
+                const checked = this.checked;
+                localStorage.setItem('zendesk.index.autoRefresh', String(checked));
+                toggles.forEach(t => {
+                    t.checked = checked;
+                });
+                if (checked) {
+                    startAutoRefresh();
+                } else {
+                    stopAutoRefresh();
+                }
+            });
         });
     }
-
-    // Default indicator text
-    const label = document.getElementById('refresh-timer-label');
-    if (label && (!toggle || !toggle.checked)) label.textContent = 'Off';
 });
 
 // Pause when page is hidden (if enabled)

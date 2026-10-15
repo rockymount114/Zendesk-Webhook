@@ -151,5 +151,16 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
      * Reveal the conversation section only when follow-up comments exist, updating the counter to reflect the number of follow-up messages.
    - Updated unit test assertions in `tests/test_app.py`. All 28 automated tests passing.
 
+20. Front Page Ticket Link Direct Navigation & Auto-Refresh Toggle:
+   - Removed the separate external arrow link (`↗`) from recent tickets on the front page (`templates/index.html`).
+   - Converted the ticket ID (`#{{ ticket.id }}`) into an active anchor link (`<a class="ticket-id ticket-id-link" href="...">`) matching the dashboard behavior, directly opening the ticket in Zendesk when clicked. Clicking anywhere else on the ticket card opens the slide-over preview drawer.
+   - Fixed topbar block inheritance in `templates/base.html` by placing `<header class="app-topbar">` and `{% block topbar_action %}` directly in `base.html`, allowing child templates to properly render topbar actions.
+   - Cleaned up front-page refresh controls on `templates/index.html` by removing the redundant topbar checkbox, keeping a single clean Auto-refresh toggle (`Auto: Off/60s`) directly on the Recent Tickets card header (`.tickets-card-header`), matching the Open Tickets page design.
+   - Updated `static/script.js` to manage the card-header auto-refresh toggle input (`#toggle-index-refresh`) and countdown label (`#refresh-timer-label`) with local storage persistence.
+   - Updated `static/style.css` with responsive header layout (`.tickets-card-header`) and interactive ticket ID link hover styles (`a.ticket-id:hover`).
+   - Extended unit tests in `tests/test_app.py` asserting the presence of the card-header auto-refresh toggle, direct ticket links, and the absence of redundant topbar checkboxes or arrow sign links. All 28 automated tests passing.
+
+
+
 
 

@@ -1066,6 +1066,18 @@ body {
     box-shadow: 0 1px 2px oklch(27% 0.025 250 / 4%), 0 8px 24px oklch(27% 0.025 250 / 3%);
 }
 
+.tickets-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.tickets-card-header h3 {
+    margin: 0;
+}
+
 .card h3 {
     margin: 0 0 10px;
     color: var(--ink);
@@ -1126,6 +1138,23 @@ body {
     background: var(--accent-soft);
     color: var(--accent-dark);
     font-size: 0.78rem;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+a.ticket-id,
+.ticket-id-link {
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+a.ticket-id:hover,
+.ticket-id-link:hover {
+    background: var(--accent-dark);
+    color: #ffffff;
 }
 
 .ticket-external-link {

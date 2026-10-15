@@ -13,7 +13,18 @@
 <body class="{% block body_class %}{% endblock %}">
     <a class="skip-link" href="#main-content">{% block skip_link_text %}Skip to main content{% endblock %}</a>
     <div class="container">
-        {% include 'partials/header.html' %}
+        <header class="app-topbar">
+            <a class="brand-lockup" href="{{ url_for('index') }}" aria-label="City of Rocky Mount Service Desk home">
+                <span class="brand-monogram" aria-hidden="true">RM</span>
+                <span class="brand-copy"><strong>Rocky Mount</strong><small>Service desk</small></span>
+            </a>
+            <nav class="nav-bar" aria-label="Main navigation">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>Recent</a>
+                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" {% if request.endpoint == 'dashboard' %}aria-current="page"{% endif %}>KPIs</a>
+                <a href="{{ url_for('open_tickets_page') }}" class="nav-link {% if request.endpoint == 'open_tickets_page' %}active{% endif %}" {% if request.endpoint == 'open_tickets_page' %}aria-current="page"{% endif %}>Open tickets</a>
+            </nav>
+            {% block topbar_action %}{% endblock %}
+        </header>
 
         <main id="main-content">
             {% block content %}{% endblock %}

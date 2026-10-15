@@ -8,13 +8,6 @@
 
 {% block skip_link_text %}Skip to ticket list{% endblock %}
 
-{% block topbar_action %}
-<label class="refresh-control" title="Refresh this page every 60 seconds">
-    <input type="checkbox" id="toggle-index-refresh">
-    <span>Auto-refresh</span><strong id="refresh-timer-label">Off</strong>
-</label>
-{% endblock %}
-
 {% block content %}
 <div class="header page-heading">
     <div class="eyebrow">TICKET MONITOR</div>
@@ -24,7 +17,13 @@
 
 <!-- recent ticket section -->
 <div class="card tickets-card">
-    <h3>Recent tickets <span class="section-count">{{ recent_tickets|length if recent_tickets else 0 }}</span></h3>
+    <div class="tickets-card-header">
+        <h3>Recent tickets <span class="section-count">{{ recent_tickets|length if recent_tickets else 0 }}</span></h3>
+        <label class="auto-refresh-toggle-sm" title="Auto-refresh every 60 seconds">
+            <input type="checkbox" id="toggle-index-refresh" class="toggle-index-refresh">
+            <span>Auto: <strong id="refresh-timer-label" class="refresh-timer-label">Off</strong></span>
+        </label>
+    </div>
     {% if tickets_error %}
         <div class="error-message">
             <p><strong>⚠️ Error loading tickets:</strong></p>
@@ -46,8 +45,7 @@
                  data-url="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}">
                 <div class="ticket-header">
                     <div class="ticket-main-info">
-                        <span class="ticket-id">#{{ ticket.id }}</span>
-                        <a class="ticket-external-link" href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" aria-label="Open ticket {{ ticket.id }} in Zendesk">↗</a>
+                        <a class="ticket-id ticket-id-link" href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" aria-label="Open ticket {{ ticket.id }} in Zendesk" title="Open ticket #{{ ticket.id }} in Zendesk">#{{ ticket.id }}</a>
                         <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
                         <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
                     </div>

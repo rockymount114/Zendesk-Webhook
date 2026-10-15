@@ -85,6 +85,12 @@ class TestAppRoutes:
         assert 'data-id="4021"' in content
         assert 'data-description=' in content
         assert 'id="drawer-conversation-section" class="drawer-section" hidden' in content
+        assert "ticket-external-link" not in content
+        assert 'href="https://test.zendesk.com/agent/tickets/4021"' in content
+        assert "toggle-index-refresh" in content
+        assert "auto-refresh-toggle-sm" in content
+        assert "refresh-timer-label" in content
+        assert "refresh-control" not in content
 
 
     @patch("app.requests.get")

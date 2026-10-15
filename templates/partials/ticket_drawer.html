@@ -63,28 +63,11 @@
             </div>
         </div>
 
-        <!-- Conversation / Comments Section -->
-        <div class="drawer-section">
+        <!-- Conversation / Comments Section (Hidden by default; revealed only when follow-up comments exist) -->
+        <div id="drawer-conversation-section" class="drawer-section" hidden>
             <div class="drawer-section-header">
                 <h3>Conversation Activity</h3>
                 <span id="drawer-comments-count" class="section-count">0</span>
-            </div>
-
-            <!-- Loading Spinner State -->
-            <div id="drawer-comments-loading" class="drawer-state-box drawer-loading-box" hidden>
-                <div class="drawer-spinner" aria-hidden="true"></div>
-                <span>Loading conversation history...</span>
-            </div>
-
-            <!-- Error State -->
-            <div id="drawer-comments-error" class="drawer-state-box drawer-error-box" hidden>
-                <p id="drawer-error-text">Unable to load comments from Zendesk.</p>
-                <button type="button" id="drawer-retry-btn" class="btn btn-secondary btn-sm">Retry</button>
-            </div>
-
-            <!-- Empty State -->
-            <div id="drawer-comments-empty" class="drawer-state-box drawer-empty-box" hidden>
-                <p>💬 No comments recorded on this ticket yet.</p>
             </div>
 
             <!-- Comments Timeline Container -->

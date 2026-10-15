@@ -2166,6 +2166,13 @@ body.ticket-drawer-open {
     word-break: break-word;
 }
 
+/* Ensure hidden elements are strictly hidden */
+[hidden],
+.drawer-section[hidden],
+.drawer-state-box[hidden] {
+    display: none !important;
+}
+
 /* State Boxes (Loading, Error, Empty) */
 .drawer-state-box {
     padding: 24px 16px;
@@ -2175,44 +2182,6 @@ body.ticket-drawer-open {
     background: #f8fafc;
     color: var(--muted, #64748b);
     font-size: 0.86rem;
-}
-
-.drawer-loading-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.drawer-spinner {
-    width: 24px;
-    height: 24px;
-    border: 2.5px solid rgba(2, 132, 199, 0.2);
-    border-top-color: var(--accent-dark, #0284c7);
-    border-radius: 50%;
-    animation: drawer-spin 0.7s linear infinite;
-}
-
-@keyframes drawer-spin {
-    to { transform: rotate(360deg); }
-}
-
-.drawer-error-box {
-    color: #b91c1c;
-    background: #fef2f2;
-    border-color: #fecaca;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.drawer-error-box p {
-    margin: 0;
-}
-
-.drawer-empty-box p {
-    margin: 0;
 }
 
 /* Comments Timeline */

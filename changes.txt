@@ -139,4 +139,17 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Included drawer partial and script in `templates/base.html`.
    - Updated and extended unit test suite in `tests/test_app.py` validating drawer presence, data attributes, and comments API user sideloading. All 28 automated tests passing.
 
+19. Refined Ticket Preview Drawer Conversation History Loading & Visibility:
+   - Resolved CSS specificity bug in `static/style.css` where `display: flex;` previously prevented `[hidden]` attributes from hiding state boxes, causing loading spinners and error messages to be visible simultaneously.
+   - Added strict `[hidden], .drawer-section[hidden], .drawer-state-box[hidden] { display: none !important; }` rule.
+   - Updated `templates/partials/ticket_drawer.html` to hide `#drawer-conversation-section` by default and removed distracting static loading/error boxes.
+   - Updated `static/ticket_preview.js` to:
+     * Keep the conversation section completely hidden while checking comments in the background.
+     * Filter out comment #1 (the original submission description) and only display follow-up messages (comment #2 onward).
+     * If a ticket has no follow-up replies or notes (or has 0-1 comments), keep the conversation section completely hidden.
+     * If the Zendesk comments API encounters an error or is unconfigured, silently keep the conversation section hidden without alarming users.
+     * Reveal the conversation section only when follow-up comments exist, updating the counter to reflect the number of follow-up messages.
+   - Updated unit test assertions in `tests/test_app.py`. All 28 automated tests passing.
+
+
 

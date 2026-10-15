@@ -7,7 +7,7 @@
     let drawer, backdrop, closeBtn, prevBtn, nextBtn, zendeskLink;
     let ticketIdEl, statusBadge, priorityBadge, subjectEl;
     let requesterEl, assigneeEl, createdAtEl, updatedAtEl, descriptionEl;
-    let commentsCountEl, commentsLoading, commentsError, commentsEmpty, commentsTimeline, retryBtn;
+    let conversationSection, commentsCountEl, commentsTimeline;
 
     let currentTicketElement = null;
     let currentTicketId = null;
@@ -33,12 +33,9 @@
         updatedAtEl = document.getElementById('drawer-updated-at');
         descriptionEl = document.getElementById('drawer-description');
 
+        conversationSection = document.getElementById('drawer-conversation-section');
         commentsCountEl = document.getElementById('drawer-comments-count');
-        commentsLoading = document.getElementById('drawer-comments-loading');
-        commentsError = document.getElementById('drawer-comments-error');
-        commentsEmpty = document.getElementById('drawer-comments-empty');
         commentsTimeline = document.getElementById('drawer-comments-timeline');
-        retryBtn = document.getElementById('drawer-retry-btn');
     }
 
     // Retrieve list of currently visible ticket elements in active view
@@ -137,11 +134,10 @@
         }
         commentsAbortController = new AbortController();
 
-        if (commentsLoading) commentsLoading.hidden = false;
-        if (commentsError) commentsError.hidden = true;
-        if (commentsEmpty) commentsEmpty.hidden = true;
+        // Keep conversation section hidden until we confirm follow-up comments exist
+        if (conversationSection) conversationSection.hidden = true;
         if (commentsTimeline) commentsTimeline.innerHTML = '';
-        if (commentsCountEl) commentsCountEl.textContent = '...';
+        if (commentsCountEl) commentsCountEl.textContent = '0';
 
         fetch(`/api/tickets/${ticketId}/comments`, {
             signal: commentsAbortController.signal,
@@ -154,9 +150,17 @@
                 return res.json();
             })
             .then(data => {
-                if (commentsLoading) commentsLoading.hidden = true;
-
                 const comments = Array.isArray(data.comments) ? data.comments : [];
+
+                // Zendesk comment #1 is always the ticket's original description (already displayed above).
+                // Follow-up conversation activity consists of comments from index 1 onward.
+                if (comments.length <= 1) {
+                    // No follow-up replies or notes: keep section hidden cleanly
+                    if (conversationSection) conversationSection.hidden = true;
+                    return;
+                }
+
+                const followUpComments = comments.slice(1);
                 const usersList = Array.isArray(data.users) ? data.users : [];
                 const usersMap = {};
 
@@ -165,122 +169,126 @@
                 });
 
                 if (commentsCountEl) {
-                    commentsCountEl.textContent = comments.length;
+                    commentsCountEl.textContent = followUpComments.length;
                 }
 
-                if (comments.length === 0) {
-                    if (commentsEmpty) commentsEmpty.hidden = false;
-                    return;
-                }
+                if (commentsTimeline) {
+                    commentsTimeline.innerHTML = '';
 
-                // Render each comment
-                comments.forEach((comment, index) => {
-                    const card = document.createElement('article');
-                    const isInternal = (comment.public === false);
-                    card.className = `comment-card ${isInternal ? 'comment-internal' : 'comment-public'}`;
+                    // Render each follow-up comment
+                    followUpComments.forEach(comment => {
+                        const card = document.createElement('article');
+                        const isInternal = (comment.public === false);
+                        card.className = `comment-card ${isInternal ? 'comment-internal' : 'comment-public'}`;
 
-                    // Resolve author name
-                    let authorName = usersMap[comment.author_id];
-                    if (!authorName) {
-                        if (index === 0 && requesterName && requesterName !== 'Unknown') {
-                            authorName = requesterName;
-                        } else {
-                            authorName = `User #${comment.author_id}`;
-                        }
-                    }
-
-                    const initials = getInitials(authorName);
-                    const formattedDate = formatCommentTimestamp(comment.created_at);
-
-                    // Header
-                    const header = document.createElement('div');
-                    header.className = 'comment-header';
-
-                    const avatar = document.createElement('div');
-                    avatar.className = `comment-avatar ${isInternal ? 'avatar-internal' : 'avatar-public'}`;
-                    avatar.textContent = initials;
-                    avatar.setAttribute('aria-hidden', 'true');
-
-                    const metaGroup = document.createElement('div');
-                    metaGroup.className = 'comment-meta-group';
-
-                    const authorSpan = document.createElement('span');
-                    authorSpan.className = 'comment-author-name';
-                    authorSpan.textContent = authorName;
-
-                    const dateSpan = document.createElement('span');
-                    dateSpan.className = 'comment-date';
-                    dateSpan.textContent = formattedDate;
-
-                    metaGroup.appendChild(authorSpan);
-                    metaGroup.appendChild(dateSpan);
-
-                    const badge = document.createElement('span');
-                    if (isInternal) {
-                        badge.className = 'comment-badge badge-internal';
-                        badge.textContent = '🔒 Internal Note';
-                    } else {
-                        badge.className = 'comment-badge badge-public';
-                        badge.textContent = 'Public Reply';
-                    }
-
-                    header.appendChild(avatar);
-                    header.appendChild(metaGroup);
-                    header.appendChild(badge);
-                    card.appendChild(header);
-
-                    // Comment body text
-                    const bodyDiv = document.createElement('div');
-                    bodyDiv.className = 'comment-body-text';
-                    bodyDiv.textContent = comment.body || comment.plain_body || '(Empty comment)';
-                    card.appendChild(bodyDiv);
-
-                    // Attachments if present
-                    if (Array.isArray(comment.attachments) && comment.attachments.length > 0) {
-                        const attContainer = document.createElement('div');
-                        attContainer.className = 'comment-attachments-list';
-
-                        comment.attachments.forEach(att => {
-                            const attLink = document.createElement('a');
-                            attLink.className = 'comment-attachment-pill';
-                            attLink.href = att.content_url || '#';
-                            attLink.target = '_blank';
-                            attLink.rel = 'noopener noreferrer';
-                            attLink.title = `Download ${att.file_name || 'attachment'}`;
-
-                            const icon = document.createElement('span');
-                            icon.textContent = '📎 ';
-                            icon.setAttribute('aria-hidden', 'true');
-
-                            const nameSpan = document.createElement('span');
-                            nameSpan.className = 'attachment-name';
-                            nameSpan.textContent = att.file_name || 'Attachment';
-
-                            attLink.appendChild(icon);
-                            attLink.appendChild(nameSpan);
-
-                            if (att.size) {
-                                const sizeSpan = document.createElement('span');
-                                sizeSpan.className = 'attachment-size';
-                                sizeSpan.textContent = ` (${formatFileSize(att.size)})`;
-                                attLink.appendChild(sizeSpan);
+                        // Resolve author name
+                        let authorName = usersMap[comment.author_id];
+                        if (!authorName) {
+                            if (requesterName && requesterName !== 'Unknown' && comment.author_id === data.requester_id) {
+                                authorName = requesterName;
+                            } else if (assigneeName && assigneeName !== 'Unassigned' && comment.author_id === data.assignee_id) {
+                                authorName = assigneeName;
+                            } else {
+                                authorName = `User #${comment.author_id}`;
                             }
+                        }
 
-                            attContainer.appendChild(attLink);
-                        });
+                        const initials = getInitials(authorName);
+                        const formattedDate = formatCommentTimestamp(comment.created_at);
 
-                        card.appendChild(attContainer);
-                    }
+                        // Header
+                        const header = document.createElement('div');
+                        header.className = 'comment-header';
 
-                    commentsTimeline.appendChild(card);
-                });
+                        const avatar = document.createElement('div');
+                        avatar.className = `comment-avatar ${isInternal ? 'avatar-internal' : 'avatar-public'}`;
+                        avatar.textContent = initials;
+                        avatar.setAttribute('aria-hidden', 'true');
+
+                        const metaGroup = document.createElement('div');
+                        metaGroup.className = 'comment-meta-group';
+
+                        const authorSpan = document.createElement('span');
+                        authorSpan.className = 'comment-author-name';
+                        authorSpan.textContent = authorName;
+
+                        const dateSpan = document.createElement('span');
+                        dateSpan.className = 'comment-date';
+                        dateSpan.textContent = formattedDate;
+
+                        metaGroup.appendChild(authorSpan);
+                        metaGroup.appendChild(dateSpan);
+
+                        const badge = document.createElement('span');
+                        if (isInternal) {
+                            badge.className = 'comment-badge badge-internal';
+                            badge.textContent = '🔒 Internal Note';
+                        } else {
+                            badge.className = 'comment-badge badge-public';
+                            badge.textContent = 'Public Reply';
+                        }
+
+                        header.appendChild(avatar);
+                        header.appendChild(metaGroup);
+                        header.appendChild(badge);
+                        card.appendChild(header);
+
+                        // Comment body text
+                        const bodyDiv = document.createElement('div');
+                        bodyDiv.className = 'comment-body-text';
+                        bodyDiv.textContent = comment.body || comment.plain_body || '(Empty comment)';
+                        card.appendChild(bodyDiv);
+
+                        // Attachments if present
+                        if (Array.isArray(comment.attachments) && comment.attachments.length > 0) {
+                            const attContainer = document.createElement('div');
+                            attContainer.className = 'comment-attachments-list';
+
+                            comment.attachments.forEach(att => {
+                                const attLink = document.createElement('a');
+                                attLink.className = 'comment-attachment-pill';
+                                attLink.href = att.content_url || '#';
+                                attLink.target = '_blank';
+                                attLink.rel = 'noopener noreferrer';
+                                attLink.title = `Download ${att.file_name || 'attachment'}`;
+
+                                const icon = document.createElement('span');
+                                icon.textContent = '📎 ';
+                                icon.setAttribute('aria-hidden', 'true');
+
+                                const nameSpan = document.createElement('span');
+                                nameSpan.className = 'attachment-name';
+                                nameSpan.textContent = att.file_name || 'Attachment';
+
+                                attLink.appendChild(icon);
+                                attLink.appendChild(nameSpan);
+
+                                if (att.size) {
+                                    const sizeSpan = document.createElement('span');
+                                    sizeSpan.className = 'attachment-size';
+                                    sizeSpan.textContent = ` (${formatFileSize(att.size)})`;
+                                    attLink.appendChild(sizeSpan);
+                                }
+
+                                attContainer.appendChild(attLink);
+                            });
+
+                            card.appendChild(attContainer);
+                        }
+
+                        commentsTimeline.appendChild(card);
+                    });
+                }
+
+                // Reveal section once follow-up comments are rendered
+                if (conversationSection) {
+                    conversationSection.hidden = false;
+                }
             })
             .catch(err => {
                 if (err.name === 'AbortError') return;
-                console.warn('Comments fetch error:', err);
-                if (commentsLoading) commentsLoading.hidden = true;
-                if (commentsError) commentsError.hidden = false;
-                if (commentsCountEl) commentsCountEl.textContent = '0';
+                // Silently hide conversation section on errors to avoid confusing users
+                if (conversationSection) conversationSection.hidden = true;
             });
     }
 
@@ -323,6 +331,11 @@
             descriptionEl.textContent = ds.description || 'No description provided.';
         }
 
+        // Hide conversation section while checking in background
+        if (conversationSection) conversationSection.hidden = true;
+        if (commentsTimeline) commentsTimeline.innerHTML = '';
+        if (commentsCountEl) commentsCountEl.textContent = '0';
+
         updateNavButtons();
 
         // Reveal drawer
@@ -337,7 +350,7 @@
 
         drawer.focus();
 
-        // Fetch comments
+        // Check for follow-up comments in background
         if (currentTicketId) {
             fetchComments(currentTicketId, ds.requester, ds.assignee);
         }
@@ -355,6 +368,8 @@
             commentsAbortController.abort();
             commentsAbortController = null;
         }
+
+        if (conversationSection) conversationSection.hidden = true;
 
         if (lastActiveElement && typeof lastActiveElement.focus === 'function') {
             lastActiveElement.focus();
@@ -381,15 +396,6 @@
             });
         }
 
-        if (retryBtn) {
-            retryBtn.addEventListener('click', function () {
-                if (currentTicketId && currentTicketElement) {
-                    const ds = currentTicketElement.dataset;
-                    fetchComments(currentTicketId, ds.requester, ds.assignee);
-                }
-            });
-        }
-
         // Global keydown listeners for drawer
         document.addEventListener('keydown', function (e) {
             if (!drawer || !drawer.classList.contains('is-open')) return;
@@ -398,12 +404,10 @@
                 e.preventDefault();
                 closePreview();
             } else if (e.key === 'ArrowUp' || e.key === 'k') {
-                // Navigate previous ticket if not typing in an input
                 if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
                 e.preventDefault();
                 navigateRelative(-1);
             } else if (e.key === 'ArrowDown' || e.key === 'j') {
-                // Navigate next ticket if not typing in an input
                 if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
                 e.preventDefault();
                 navigateRelative(1);

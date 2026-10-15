@@ -84,6 +84,7 @@ class TestAppRoutes:
         assert "ticket_preview.js" in content
         assert 'data-id="4021"' in content
         assert 'data-description=' in content
+        assert 'id="drawer-conversation-section" class="drawer-section" hidden' in content
 
 
     @patch("app.requests.get")

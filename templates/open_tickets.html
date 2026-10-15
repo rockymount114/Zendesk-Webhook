@@ -90,6 +90,7 @@
                 <tr class="ticket-row"
                     data-id="{{ ticket.id }}"
                     data-subject="{{ ticket.subject|e }}"
+                    data-description="{{ ticket.description|default('')|e }}"
                     data-requester="{{ ticket.requester_name|e }}"
                     data-assignee="{{ ticket.assignee_name|e }}"
                     data-status="{{ ticket.status }}"

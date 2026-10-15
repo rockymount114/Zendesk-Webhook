@@ -1,0 +1,94 @@
+<!-- Slide-Over Ticket Preview Drawer -->
+<div id="ticket-drawer-backdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
+<aside id="ticket-preview-drawer" class="ticket-drawer" aria-labelledby="drawer-ticket-subject" aria-modal="true" role="dialog" aria-hidden="true" tabindex="-1">
+    <div class="drawer-header">
+        <div class="drawer-header-left">
+            <span id="drawer-ticket-id" class="drawer-ticket-id">#0</span>
+            <span id="drawer-ticket-status" class="status-badge status-new">NEW</span>
+            <span id="drawer-ticket-priority" class="priority-badge priority-normal">Normal</span>
+        </div>
+        <div class="drawer-header-actions">
+            <div class="drawer-nav-group" role="group" aria-label="Ticket navigation">
+                <button type="button" id="drawer-prev-btn" class="drawer-nav-btn" title="Previous ticket (Up arrow or k)" aria-label="Previous ticket">
+                    <span aria-hidden="true">‹</span> Prev
+                </button>
+                <button type="button" id="drawer-next-btn" class="drawer-nav-btn" title="Next ticket (Down arrow or j)" aria-label="Next ticket">
+                    Next <span aria-hidden="true">›</span>
+                </button>
+            </div>
+            <a id="drawer-zendesk-link" class="drawer-external-link-btn" href="#" target="_blank" rel="noopener noreferrer" title="Open ticket in Zendesk">
+                Zendesk ↗
+            </a>
+            <button type="button" id="drawer-close-btn" class="drawer-close-btn" aria-label="Close ticket preview (Escape)">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="drawer-body">
+        <!-- Subject Section -->
+        <div class="drawer-subject-block">
+            <div class="drawer-eyebrow">TICKET SUBJECT</div>
+            <h2 id="drawer-ticket-subject" class="drawer-subject">Subject</h2>
+        </div>
+
+        <!-- Metadata Grid -->
+        <div class="drawer-meta-grid">
+            <div class="drawer-meta-item">
+                <span class="meta-label">Requester</span>
+                <span id="drawer-requester" class="meta-value">Unknown</span>
+            </div>
+            <div class="drawer-meta-item">
+                <span class="meta-label">Assignee</span>
+                <span id="drawer-assignee" class="meta-value">Unassigned</span>
+            </div>
+            <div class="drawer-meta-item">
+                <span class="meta-label">Created At</span>
+                <span id="drawer-created-at" class="meta-value">N/A</span>
+            </div>
+            <div class="drawer-meta-item">
+                <span class="meta-label">Updated At</span>
+                <span id="drawer-updated-at" class="meta-value">N/A</span>
+            </div>
+        </div>
+
+        <!-- Initial Request / Description Section -->
+        <div class="drawer-section">
+            <div class="drawer-section-header">
+                <h3>Initial Request</h3>
+            </div>
+            <div class="drawer-card drawer-description-card">
+                <div id="drawer-description" class="drawer-text-content">No description provided.</div>
+            </div>
+        </div>
+
+        <!-- Conversation / Comments Section -->
+        <div class="drawer-section">
+            <div class="drawer-section-header">
+                <h3>Conversation Activity</h3>
+                <span id="drawer-comments-count" class="section-count">0</span>
+            </div>
+
+            <!-- Loading Spinner State -->
+            <div id="drawer-comments-loading" class="drawer-state-box drawer-loading-box" hidden>
+                <div class="drawer-spinner" aria-hidden="true"></div>
+                <span>Loading conversation history...</span>
+            </div>
+
+            <!-- Error State -->
+            <div id="drawer-comments-error" class="drawer-state-box drawer-error-box" hidden>
+                <p id="drawer-error-text">Unable to load comments from Zendesk.</p>
+                <button type="button" id="drawer-retry-btn" class="btn btn-secondary btn-sm">Retry</button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="drawer-comments-empty" class="drawer-state-box drawer-empty-box" hidden>
+                <p>💬 No comments recorded on this ticket yet.</p>
+            </div>
+
+            <!-- Comments Timeline Container -->
+            <div id="drawer-comments-timeline" class="drawer-comments-timeline"></div>
+        </div>
+    </div>
+</aside>

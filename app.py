@@ -525,7 +525,8 @@ def get_ticket_comments(ticket_id):
     try:
         url = f"https://{BASE_DOMAIN}/api/v2/tickets/{ticket_id}/comments.json"
         headers = {"Content-Type": "application/json"}
-        resp = requests.get(url, auth=auth, headers=headers)
+        params = {"include": "users"}
+        resp = requests.get(url, auth=auth, headers=headers, params=params)
         if resp.status_code == 200:
             return jsonify(resp.json())
         return jsonify({"error": f"Zendesk API error: {resp.status_code}", "details": resp.text}), resp.status_code

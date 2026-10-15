@@ -167,7 +167,17 @@
       </thead>
       <tbody id="ticket-details-body">
         {% for ticket in all_tickets %}
-        <tr data-status="{{ 'on-hold' if ticket.status|default('')|lower == 'hold' else ticket.status|default('unknown')|lower|e }}" data-assignee="{{ ticket.assignee_name|default('Unassigned')|e }}">
+        <tr class="ticket-row"
+            data-id="{{ ticket.id }}"
+            data-subject="{{ ticket.subject|default(ticket.subject_short)|e }}"
+            data-description="{{ ticket.description|default('')|e }}"
+            data-requester="{{ ticket.requester_name|default('Unknown')|e }}"
+            data-assignee="{{ ticket.assignee_name|default('Unassigned')|e }}"
+            data-status="{{ 'on-hold' if ticket.status|default('')|lower == 'hold' else ticket.status|default('unknown')|lower|e }}"
+            data-priority="{{ ticket.priority or '' }}"
+            data-created-formatted="{{ ticket.created_at_formatted|default('N/A') }}"
+            data-updated-formatted="{{ ticket.updated_at_formatted|default('N/A') }}"
+            data-url="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}">
           <td><a href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer">{{ ticket.id }}</a></td>
           <td title="{{ ticket.description|default('')|e }}">{{ ticket.subject_short|default(ticket.subject|default('No subject')) }}</td>
           <td>{{ ticket.requester_name|default('Unknown') }}</td>

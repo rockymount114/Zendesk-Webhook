@@ -125,3 +125,18 @@ Summary of Changes: Migration to Zendesk OAuth2 Authentication
    - Added `box-sizing: border-box` to `.dashboard-charts-section`, `.charts-grid-row`, `.chart-card`, and `.chart-card-full` in `static/style.css`.
    - Resolved right-side overflow issue where `.chart-card-full` with `width: 100%` previously expanded by 38px (padding + borders) beyond `.charts-grid-row`, perfectly aligning the Daily Trend chart card with the Top 10 Assignees chart above it.
 
+18. Slide-Over Ticket Preview Drawer & Conversation History:
+   - Created `templates/partials/ticket_drawer.html` providing an off-canvas slide-over drawer (560px on desktop, 100% on mobile) with dimmed backdrop.
+   - Built `static/ticket_preview.js` offering delegated click opening across all ticket views, keyboard navigation (Esc, Up/Down arrows, k/j), Previous / Next ticket sequential browsing, and async comments fetching.
+   - Enhanced `get_ticket_comments` in `app.py` with `params={"include": "users"}` to automatically resolve author names and profile metadata.
+   - Added complete ticket preview data attributes (`data-id`, `data-subject`, `data-description`, `data-requester`, `data-assignee`, `data-status`, `data-priority`, `data-created-formatted`, `data-updated-formatted`, `data-url`) across `templates/open_tickets.html`, `templates/index.html`, and `templates/dashboard.html`.
+   - Styled drawer and conversation timeline in `static/style.css` with Rocky Mount / Apple-inspired design tokens:
+     * Clean header with Ticket ID, status badge, priority badge, Prev/Next navigation group, external Zendesk link, and close button.
+     * Full ticket subject and structured metadata grid (Requester, Assignee, Created At, Updated At).
+     * Formatted Initial Request description box with preserved whitespace/linebreaks.
+     * Conversation Activity timeline differentiating Public Replies (clean cards) from Internal Notes (amber tint with 🔒 Internal Note badge), author initials/avatars, formatted EST timestamps, and clickable attachment pills.
+     * Loading spinner, error state with Retry button, and empty state handlers.
+   - Included drawer partial and script in `templates/base.html`.
+   - Updated and extended unit test suite in `tests/test_app.py` validating drawer presence, data attributes, and comments API user sideloading. All 28 automated tests passing.
+
+

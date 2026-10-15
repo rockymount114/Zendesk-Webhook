@@ -33,11 +33,21 @@
     {% elif recent_tickets %}
         <div class="tickets-list">
             {% for ticket in recent_tickets %}
-            <div class="ticket-item">
+            <div class="ticket-item"
+                 data-id="{{ ticket.id }}"
+                 data-subject="{{ ticket.subject|default(ticket.subject_short)|e }}"
+                 data-description="{{ ticket.description|default(ticket.description_short)|e }}"
+                 data-requester="{{ ticket.requester_name|e }}"
+                 data-assignee="{{ ticket.assignee_name|e }}"
+                 data-status="{{ ticket.status }}"
+                 data-priority="{{ ticket.priority or '' }}"
+                 data-created-formatted="{{ ticket.created_at_formatted }}"
+                 data-updated-formatted="{{ ticket.updated_at_formatted or '' }}"
+                 data-url="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}">
                 <div class="ticket-header">
                     <div class="ticket-main-info">
                         <span class="ticket-id">#{{ ticket.id }}</span>
-                        <a class="ticket-external-link" href="https://rockymountnchelp.zendesk.com/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" aria-label="Open ticket {{ ticket.id }} in Zendesk">↗</a>
+                        <a class="ticket-external-link" href="https://{{ zendesk_domain }}/agent/tickets/{{ ticket.id }}" target="_blank" rel="noopener noreferrer" aria-label="Open ticket {{ ticket.id }} in Zendesk">↗</a>
                         <span class="ticket-status status-{{ ticket.status }}">{{ ticket.status.upper() }}</span>
                         <span class="ticket-priority priority-{{ ticket.priority or 'normal' }}">{{ ticket.priority or 'Normal' }}</span>
                     </div>

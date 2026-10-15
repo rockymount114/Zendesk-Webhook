@@ -80,6 +80,10 @@ class TestAppRoutes:
         assert "footer-card" in content
         assert "Designed by XL" in content
         assert 'nav-link active" aria-current="page">Recent' in content
+        assert "ticket-preview-drawer" in content
+        assert "ticket_preview.js" in content
+        assert 'data-id="4021"' in content
+        assert 'data-description=' in content
 
 
     @patch("app.requests.get")
@@ -110,6 +114,12 @@ class TestAppRoutes:
                     "author_id": 101,
                     "created_at": "2026-03-01T12:00:00Z",
                 }
+            ],
+            "users": [
+                {
+                    "id": 101,
+                    "name": "Support Agent",
+                }
             ]
         }
         mock_get.return_value = mock_resp
@@ -119,6 +129,11 @@ class TestAppRoutes:
         data = response.get_json()
         assert "comments" in data
         assert data["comments"][0]["body"] == "First comment"
+        assert "users" in data
+        assert data["users"][0]["name"] == "Support Agent"
+        # Verify params={"include": "users"} was passed
+        call_kwargs = mock_get.call_args[1]
+        assert call_kwargs.get("params") == {"include": "users"}
 
     def test_comments_route_unconfigured(self, monkeypatch, client):
         import app
@@ -172,6 +187,11 @@ class TestAppRoutes:
         assert b"footer-card" in response.data
         assert b"Designed by XL" in response.data
         assert b'nav-link active" aria-current="page">KPIs' in response.data
+        assert b"ticket-preview-drawer" in response.data
+        assert b"ticket_preview.js" in response.data
+        assert b'class="ticket-row"' in response.data
+        assert b'data-id="4021"' in response.data
+        assert b'data-description=' in response.data
 
 
 
@@ -245,6 +265,9 @@ class TestAppRoutes:
         assert "footer-card" in content
         assert "Designed by XL" in content
         assert 'nav-link active" aria-current="page">Open tickets' in content
+        assert "ticket-preview-drawer" in content
+        assert "ticket_preview.js" in content
+        assert 'data-description="Paper jam"' in content
 
 
     def test_open_tickets_page_unconfigured(self, monkeypatch, client):
